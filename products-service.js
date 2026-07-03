@@ -73,6 +73,7 @@ export function exportProductsAsJSON(products) {
 }
 
 export function formatPrice(price, unit) {
+  if (!price) return '洽詢';
   const formatted = Number(price).toLocaleString('zh-TW');
   return `NT$ ${formatted}${unit ? ' ' + unit : ''}`;
 }
