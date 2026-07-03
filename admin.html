@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>後台管理 - 產品價目表</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>後台管理</h1>
+    <nav>
+      <a href="index.html">回到前台</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 登入畫面 -->
+    <div id="loginBox" class="login-box">
+      <h2>後台登入</h2>
+      <input type="email" id="emailInput" placeholder="Email" autocomplete="username" />
+      <input type="password" id="passwordInput" placeholder="密碼" autocomplete="current-password" />
+      <div class="error-text" id="loginError"></div>
+      <button id="loginBtn" style="width:100%;">登入</button>
+      <p class="hint-text"><a href="#" id="forgotPasswordLink">忘記密碼？</a></p>
+    </div>
+
+    <!-- 後台主畫面 -->
+    <div id="adminContent" style="display:none;">
+
+      <div class="section-title-row">
+        <p class="hint-text" style="margin:0;">已登入：<span id="currentUserEmail"></span></p>
+        <button class="secondary" id="logoutBtn">登出</button>
+      </div>
+
+      <div class="panel">
+        <div class="section-title-row">
+          <h2 id="formTitle">新增產品</h2>
+          <button class="secondary" id="cancelEditBtn" style="display:none;">取消編輯</button>
+        </div>
+        <form id="productForm">
+          <div class="form-grid">
+            <div class="field">
+              <label>產品名稱 *</label>
+              <input type="text" id="fieldName" required />
+            </div>
+            <div class="field">
+              <label>分類</label>
+              <input type="text" id="fieldCategory" list="categoryList" placeholder="例如：蝦類、魚類、貝類" />
+              <datalist id="categoryList"></datalist>
+            </div>
+            <div class="field">
+              <label>價格 *</label>
+              <input type="number" id="fieldPrice" min="0" step="1" required />
+            </div>
+            <div class="field">
+              <label>單位（選填）</label>
+              <input type="text" id="fieldUnit" placeholder="例如：/斤、/箱、/尾" />
+            </div>
+            <div class="field">
+              <label>產地</label>
+              <input type="text" id="fieldOrigin" list="originList" placeholder="例如：台灣澎湖、宜蘭南方澳" />
+              <datalist id="originList"></datalist>
+            </div>
+            <div class="field">
+              <label>包裝規格</label>
+              <input type="text" id="fieldPackaging" list="packagingList" placeholder="例如：1台斤/包、5公斤/箱" />
+              <datalist id="packagingList"></datalist>
+            </div>
+            <div class="field full">
+              <label>規格 (Specs)</label>
+              <div id="specRows"></div>
+              <button type="button" class="secondary" id="addSpecBtn">+ 新增規格欄位</button>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" id="submitBtn">新增產品</button>
+          </div>
+          <p class="hint-text" id="formMsg"></p>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="section-title-row">
+          <h2>產品列表</h2>
+          <button class="danger" id="clearAllBtn">清空全部產品</button>
+        </div>
+        <div class="table-scroll">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>名稱</th>
+                <th>分類</th>
+                <th>產地</th>
+                <th>包裝規格</th>
+                <th>價格</th>
+                <th>規格</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>備份與還原</h2>
+        <p class="hint-text">
+          資料平常都自動存在雲端，不用手動備份。「備份」可以把目前的產品存成一個檔案留底；
+          「還原」可以把之前存的檔案讀回來，注意會覆蓋掉目前的產品資料。
+        </p>
+        <div class="io-actions">
+          <button class="secondary" id="exportBtn">備份</button>
+          <button class="secondary" id="importBtn">還原</button>
+          <input type="file" id="importFile" accept="application/json" style="display:none;" />
+        </div>
+        <p class="hint-text" id="ioMsg"></p>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

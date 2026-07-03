@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>產品價目表</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>產品價目表</h1>
+    <nav>
+      <a href="admin.html">後台管理</a>
+    </nav>
+  </header>
+
+  <main>
+    <p id="dataSourceHint" class="hint-text" style="display:none;"></p>
+
+    <div class="toolbar">
+      <input type="text" id="searchInput" placeholder="搜尋商品名稱、分類、規格關鍵字..." />
+      <select id="categoryFilter">
+        <option value="">全部分類</option>
+      </select>
+      <select id="sortSelect">
+        <option value="default">預設排序</option>
+        <option value="price-asc">價格由低到高</option>
+        <option value="price-desc">價格由高到低</option>
+      </select>
+    </div>
+
+    <div id="productGrid" class="product-grid"></div>
+    <div id="emptyState" class="empty-state" style="display:none;">目前沒有符合條件的產品</div>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
