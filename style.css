@@ -88,6 +88,28 @@ main {
   gap: 16px;
 }
 
+.category-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 32px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--color-primary);
+  color: var(--color-text);
+}
+
+.category-heading:first-child {
+  margin-top: 0;
+}
+
+.category-count {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
 .product-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

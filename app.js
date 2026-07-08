@@ -101,7 +101,7 @@ function renderProducts() {
   }
   emptyState.style.display = 'none';
 
-  productGrid.innerHTML = products.map(p => `
+  const cardHTML = p => `
     <div class="product-card">
       <div class="badge-row">
         ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
@@ -122,7 +122,27 @@ function renderProducts() {
       ` : ''}
       <button type="button" class="secondary copy-quote-btn" data-id="${p.id}">複製報價</button>
     </div>
-  `).join('');
+  `;
+
+  // 預設排序時，依分類分組並插入標題，讓整份目錄第一眼就能看出有哪些大類、方便瀏覽找商品
+  if (sort !== 'price-asc' && sort !== 'price-desc') {
+    const groups = [];
+    products.forEach(p => {
+      const cat = p.category || '未分類';
+      const lastGroup = groups[groups.length - 1];
+      if (!lastGroup || lastGroup.category !== cat) {
+        groups.push({ category: cat, items: [p] });
+      } else {
+        lastGroup.items.push(p);
+      }
+    });
+    productGrid.innerHTML = groups.map(g => `
+      <h2 class="category-heading">${escapeHTML(g.category)}<span class="category-count">${g.items.length} 項</span></h2>
+      <div class="product-grid">${g.items.map(cardHTML).join('')}</div>
+    `).join('');
+  } else {
+    productGrid.innerHTML = `<div class="product-grid">${products.map(cardHTML).join('')}</div>`;
+  }
 }
 
 productGrid.addEventListener('click', async e => {
