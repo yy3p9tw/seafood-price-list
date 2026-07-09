@@ -177,6 +177,27 @@ main {
   100% { box-shadow: var(--shadow); }
 }
 
+.back-to-overview {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 640px) {
+  .back-to-overview {
+    right: 14px;
+    bottom: 14px;
+    padding: 11px 16px;
+    font-size: 13px;
+  }
+}
+
 @media (max-width: 640px) {
   .overview-group {
     flex-direction: column;

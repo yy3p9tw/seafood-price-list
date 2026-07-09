@@ -3,6 +3,7 @@ import { subscribeToProducts, formatPrice } from './products-service.js';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
+const backToOverviewBtn = document.getElementById('backToOverviewBtn');
 const emptyState = document.getElementById('emptyState');
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
@@ -213,6 +214,15 @@ productOverview.addEventListener('click', e => {
   card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   card.classList.add('highlight');
   setTimeout(() => card.classList.remove('highlight'), 1500);
+});
+
+backToOverviewBtn.addEventListener('click', () => {
+  productOverview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+window.addEventListener('scroll', () => {
+  const overviewBottom = productOverview.offsetTop + productOverview.offsetHeight;
+  backToOverviewBtn.style.display = window.scrollY > overviewBottom ? 'block' : 'none';
 });
 
 productGrid.addEventListener('click', async e => {
