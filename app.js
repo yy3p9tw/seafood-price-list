@@ -7,7 +7,6 @@ const backToOverviewBtn = document.getElementById('backToOverviewBtn');
 const emptyState = document.getElementById('emptyState');
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
-const sortSelect = document.getElementById('sortSelect');
 const dataSourceHint = document.getElementById('dataSourceHint');
 
 let allProducts = [];
@@ -137,20 +136,13 @@ function renderProducts() {
     products = products.filter(p => p.category === category);
   }
 
-  const sort = sortSelect.value;
-  if (sort === 'price-asc') {
-    products = [...products].sort((a, b) => a.price - b.price);
-  } else if (sort === 'price-desc') {
-    products = [...products].sort((a, b) => b.price - a.price);
-  } else {
-    // 預設先依分類排序（軟體類、蝦類、魚類、螺貝類…），同分類內再依名稱排序，
-    // 讓同系列商品（例如「軟絲 3A」「軟絲 4A」）自然排在一起
-    products = [...products].sort((a, b) => {
-      const catDiff = categoryRank(a.category) - categoryRank(b.category);
-      if (catDiff !== 0) return catDiff;
-      return a.name.localeCompare(b.name, 'zh-Hant');
-    });
-  }
+  // 先依分類排序（軟體類、蝦類、魚類、螺貝類…），同分類內再依名稱排序，
+  // 讓同系列商品（例如「軟絲 3A」「軟絲 4A」）自然排在一起
+  products = [...products].sort((a, b) => {
+    const catDiff = categoryRank(a.category) - categoryRank(b.category);
+    if (catDiff !== 0) return catDiff;
+    return a.name.localeCompare(b.name, 'zh-Hant');
+  });
 
   if (products.length === 0) {
     productGrid.innerHTML = '';
@@ -185,25 +177,21 @@ function renderProducts() {
     </div>
   `;
 
-  // 預設排序時，依分類分組並插入標題，讓整份目錄第一眼就能看出有哪些大類、方便瀏覽找商品
-  if (sort !== 'price-asc' && sort !== 'price-desc') {
-    const groups = [];
-    products.forEach(p => {
-      const cat = p.category || '未分類';
-      const lastGroup = groups[groups.length - 1];
-      if (!lastGroup || lastGroup.category !== cat) {
-        groups.push({ category: cat, items: [p] });
-      } else {
-        lastGroup.items.push(p);
-      }
-    });
-    productGrid.innerHTML = groups.map(g => `
-      <h2 class="category-heading">${escapeHTML(g.category)}<span class="category-count">${g.items.length} 項</span></h2>
-      <div class="product-grid">${g.items.map(cardHTML).join('')}</div>
-    `).join('');
-  } else {
-    productGrid.innerHTML = `<div class="product-grid">${products.map(cardHTML).join('')}</div>`;
-  }
+  // 依分類分組並插入標題，讓整份目錄第一眼就能看出有哪些大類、方便瀏覽找商品
+  const groups = [];
+  products.forEach(p => {
+    const cat = p.category || '未分類';
+    const lastGroup = groups[groups.length - 1];
+    if (!lastGroup || lastGroup.category !== cat) {
+      groups.push({ category: cat, items: [p] });
+    } else {
+      lastGroup.items.push(p);
+    }
+  });
+  productGrid.innerHTML = groups.map(g => `
+    <h2 class="category-heading">${escapeHTML(g.category)}<span class="category-count">${g.items.length} 項</span></h2>
+    <div class="product-grid">${g.items.map(cardHTML).join('')}</div>
+  `).join('');
 }
 
 productOverview.addEventListener('click', e => {
@@ -246,7 +234,6 @@ productGrid.addEventListener('click', async e => {
 
 searchInput.addEventListener('input', renderProducts);
 categoryFilter.addEventListener('change', renderProducts);
-sortSelect.addEventListener('change', renderProducts);
 
 subscribeToProducts(
   products => {
