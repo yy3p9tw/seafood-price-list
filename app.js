@@ -2,6 +2,7 @@
 import { subscribeToProducts, formatPrice } from './products-service.js';
 
 const productGrid = document.getElementById('productGrid');
+const productOverview = document.getElementById('productOverview');
 const emptyState = document.getElementById('emptyState');
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
@@ -68,6 +69,33 @@ function productMatchesKeyword(product, keyword) {
   return haystacks.some(text => (text || '').toLowerCase().includes(keyword));
 }
 
+function renderOverview(products) {
+  // 手機上卡片一個個往下拉才看得到，先在最上面放一份「全部品項」總覽，
+  // 讓人一進來就知道有哪些東西在賣，點名稱可以直接跳到該商品卡片
+  const groups = [];
+  products.forEach(p => {
+    const cat = p.category || '未分類';
+    const lastGroup = groups[groups.length - 1];
+    if (!lastGroup || lastGroup.category !== cat) {
+      groups.push({ category: cat, items: [p] });
+    } else {
+      lastGroup.items.push(p);
+    }
+  });
+
+  productOverview.innerHTML = `
+    <div class="overview-title">全部品項（共 ${products.length} 項，點名稱可直接跳過去）</div>
+    ${groups.map(g => `
+      <div class="overview-group">
+        <span class="overview-cat">${escapeHTML(g.category)}</span>
+        <div class="overview-chips">
+          ${g.items.map(p => `<button type="button" class="overview-chip" data-id="${p.id}">${escapeHTML(p.name)}</button>`).join('')}
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
 function renderProducts() {
   let products = allProducts;
 
@@ -96,13 +124,16 @@ function renderProducts() {
 
   if (products.length === 0) {
     productGrid.innerHTML = '';
+    productOverview.innerHTML = '';
     emptyState.style.display = 'block';
     return;
   }
   emptyState.style.display = 'none';
 
+  renderOverview(products);
+
   const cardHTML = p => `
-    <div class="product-card">
+    <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
         ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
         ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
@@ -144,6 +175,16 @@ function renderProducts() {
     productGrid.innerHTML = `<div class="product-grid">${products.map(cardHTML).join('')}</div>`;
   }
 }
+
+productOverview.addEventListener('click', e => {
+  const chip = e.target.closest('.overview-chip');
+  if (!chip) return;
+  const card = document.getElementById('product-' + chip.dataset.id);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('highlight');
+  setTimeout(() => card.classList.remove('highlight'), 1500);
+});
 
 productGrid.addEventListener('click', async e => {
   const btn = e.target.closest('.copy-quote-btn');
