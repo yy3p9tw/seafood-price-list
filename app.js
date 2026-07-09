@@ -14,6 +14,25 @@ let allProducts = [];
 const RECENT_UPDATE_MS = 14 * 24 * 60 * 60 * 1000; // 14 天內視為「本次更新」
 const CATEGORY_ORDER = ['軟體類', '蝦類', '魚類', '螺貝類', '其他'];
 
+// 同一系列商品（例如「軟絲 3A」「軟絲 4A」）在總覽區只顯示一個名稱，不用每個規格都列一個
+const OVERVIEW_GROUP_PREFIXES = [
+  '軟絲 ',
+  '藍龍軟絲 ',
+  '調理白蝦仁 ',
+  '白蝦AZU(850) ',
+  '白蝦 藍翡翠Ａ(850) ',
+  '調理干貝（俗稱美國干貝）',
+];
+
+function getOverviewName(name) {
+  for (const prefix of OVERVIEW_GROUP_PREFIXES) {
+    if (name.startsWith(prefix) && name.length > prefix.length) {
+      return prefix.trim();
+    }
+  }
+  return name;
+}
+
 function categoryRank(category) {
   const idx = CATEGORY_ORDER.indexOf(category);
   return idx === -1 ? CATEGORY_ORDER.length : idx;
@@ -71,25 +90,35 @@ function productMatchesKeyword(product, keyword) {
 
 function renderOverview(products) {
   // 手機上卡片一個個往下拉才看得到，先在最上面放一份「全部品項」總覽，
-  // 讓人一進來就知道有哪些東西在賣，點名稱可以直接跳到該商品卡片
+  // 讓人一進來就知道有哪些東西在賣，點名稱可以直接跳到該商品卡片。
+  // 同系列規格（例如白蝦AZU 六種尺寸）只顯示一個名稱，不然總覽會被規格洗版。
   const groups = [];
+  const seenOverviewNames = new Set();
   products.forEach(p => {
     const cat = p.category || '未分類';
+    const overviewName = getOverviewName(p.name);
+    const dedupeKey = cat + '||' + overviewName;
+    if (seenOverviewNames.has(dedupeKey)) return;
+    seenOverviewNames.add(dedupeKey);
+
     const lastGroup = groups[groups.length - 1];
+    const chip = { id: p.id, label: overviewName };
     if (!lastGroup || lastGroup.category !== cat) {
-      groups.push({ category: cat, items: [p] });
+      groups.push({ category: cat, items: [chip] });
     } else {
-      lastGroup.items.push(p);
+      lastGroup.items.push(chip);
     }
   });
 
+  const chipCount = groups.reduce((sum, g) => sum + g.items.length, 0);
+
   productOverview.innerHTML = `
-    <div class="overview-title">全部品項（共 ${products.length} 項，點名稱可直接跳過去）</div>
+    <div class="overview-title">全部品項（共 ${chipCount} 項，點名稱可直接跳過去）</div>
     ${groups.map(g => `
       <div class="overview-group">
         <span class="overview-cat">${escapeHTML(g.category)}</span>
         <div class="overview-chips">
-          ${g.items.map(p => `<button type="button" class="overview-chip" data-id="${p.id}">${escapeHTML(p.name)}</button>`).join('')}
+          ${g.items.map(chip => `<button type="button" class="overview-chip" data-id="${chip.id}">${escapeHTML(chip.label)}</button>`).join('')}
         </div>
       </div>
     `).join('')}
