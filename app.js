@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes, formatPrice } from './products-service.js?v=5';
+import { subscribeToProducts, subscribeToSalesCodes, formatPrice } from './products-service.js?v=6';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -193,8 +193,14 @@ function renderProducts() {
   renderOverview(products);
 
   const cardHTML = p => {
-    // 訪客模式：只給規格本身，任何跟價格/折扣有關的欄位（含金額的備註）整行都不顯示，不留「洽詢」之類的字樣
-    const visibleSpecs = (p.specs || []).filter(s => salesMode || !/\$|洽詢/.test(String(s.value ?? '')));
+    // 訪客模式：規格名稱（尺寸/等級）一律照顯示，只有價格本身不顯示；
+    // 純文字備註如果整句都是在講價格/折扣（例如「降$5」「20件以上不寄庫」這種備註），才整行隱藏
+    const visibleSpecs = (p.specs || [])
+      .filter(s => salesMode || s.key !== '備註' || !/\$|洽詢/.test(String(s.value ?? '')))
+      .map(s => {
+        if (salesMode || s.key === '備註' || !/\$|洽詢/.test(String(s.value ?? ''))) return s;
+        return { key: s.key, value: '－' };
+      });
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
