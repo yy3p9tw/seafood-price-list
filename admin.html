@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 - 產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
   <header class="site-header">
@@ -68,6 +68,10 @@
               <div id="specRows"></div>
               <button type="button" class="secondary" id="addSpecBtn">+ 新增規格欄位</button>
             </div>
+            <div class="field full">
+              <label>備註（選填，前台會獨立顯示，一行一則）</label>
+              <textarea id="fieldNotes" rows="3" placeholder="例如：20件以上不寄庫&#10;每日現貨依實際到貨為主"></textarea>
+            </div>
           </div>
           <div class="form-actions">
             <button type="submit" id="submitBtn">新增產品</button>
@@ -129,6 +133,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=7"></script>
+  <script type="module" src="admin.js?v=8"></script>
 </body>
 </html>

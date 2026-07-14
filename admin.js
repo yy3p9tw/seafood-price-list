@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=7';
+import { auth } from './firebase-config.js?v=8';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=7';
+} from './products-service.js?v=8';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -42,6 +42,7 @@ const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldPackaging = document.getElementById('fieldPackaging');
 const specRows = document.getElementById('specRows');
 const addSpecBtn = document.getElementById('addSpecBtn');
+const fieldNotes = document.getElementById('fieldNotes');
 const categoryList = document.getElementById('categoryList');
 const originList = document.getElementById('originList');
 const packagingList = document.getElementById('packagingList');
@@ -170,10 +171,13 @@ function addSpecRow(key = '', value = '') {
 addSpecBtn.addEventListener('click', () => addSpecRow());
 
 function getSpecsFromForm() {
-  return Array.from(specRows.querySelectorAll('.spec-row')).map(row => ({
+  const regularSpecs = Array.from(specRows.querySelectorAll('.spec-row')).map(row => ({
     key: row.querySelector('.spec-key').value.trim(),
     value: row.querySelector('.spec-value').value.trim()
   })).filter(s => s.key || s.value);
+  const notes = fieldNotes.value.split('\n').map(line => line.trim()).filter(Boolean)
+    .map(line => ({ key: '備註', value: line }));
+  return [...regularSpecs, ...notes];
 }
 
 function escapeHTML(str) {
@@ -188,6 +192,7 @@ function resetForm() {
   editingId = null;
   productForm.reset();
   specRows.innerHTML = '';
+  fieldNotes.value = '';
   formTitle.textContent = '新增產品';
   submitBtn.textContent = '新增產品';
   cancelEditBtn.style.display = 'none';
@@ -202,7 +207,10 @@ function loadProductIntoForm(product) {
   fieldOrigin.value = product.origin || '';
   fieldPackaging.value = product.packagingSpec || '';
   specRows.innerHTML = '';
-  (product.specs || []).forEach(s => addSpecRow(s.key, s.value));
+  const regularSpecs = (product.specs || []).filter(s => s.key !== '備註');
+  const notes = (product.specs || []).filter(s => s.key === '備註');
+  regularSpecs.forEach(s => addSpecRow(s.key, s.value));
+  fieldNotes.value = notes.map(s => s.value).join('\n');
   formTitle.textContent = '編輯產品：' + product.name;
   submitBtn.textContent = '儲存變更';
   cancelEditBtn.style.display = 'inline-block';
