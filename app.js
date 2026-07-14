@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, formatPrice } from './products-service.js';
+import { subscribeToProducts, subscribeToSalesCodes, formatPrice } from './products-service.js';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -8,8 +8,13 @@ const emptyState = document.getElementById('emptyState');
 const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
 const dataSourceHint = document.getElementById('dataSourceHint');
+const salesModeToggle = document.getElementById('salesModeToggle');
+
+const SALES_MODE_KEY = 'priceList_salesCode';
 
 let allProducts = [];
+let validSalesCodes = [];
+let salesMode = false;
 
 const RECENT_UPDATE_MS = 14 * 24 * 60 * 60 * 1000; // 14 天內視為「本次更新」
 const CATEGORY_ORDER = ['軟體類', '蝦類', '魚類', '螺貝類', '其他'];
@@ -47,6 +52,47 @@ function escapeHTML(str) {
 function isRecentlyUpdated(product) {
   return product.updatedAt && (Date.now() - product.updatedAt) < RECENT_UPDATE_MS;
 }
+
+// 訪客模式：規格清單裡任何看起來像金額的部分都要遮起來（包含備註裡夾帶的「降$5」這種寫法），
+// 非價格的備註（包冰%、解凍即食等）照常顯示
+function maskPriceText(value) {
+  const str = String(value ?? '');
+  if (!/\$/.test(str)) return str;
+  return str.replace(/\$[\d,]+(\.\d+)?/g, '洽詢');
+}
+
+function updateSalesModeUI() {
+  salesModeToggle.textContent = salesMode ? '登出業務模式' : '業務登入';
+}
+
+function tryUnlockWithCode(code) {
+  if (!code) return false;
+  if (validSalesCodes.includes(code.trim())) {
+    salesMode = true;
+    localStorage.setItem(SALES_MODE_KEY, code.trim());
+    updateSalesModeUI();
+    renderProducts();
+    return true;
+  }
+  return false;
+}
+
+salesModeToggle.addEventListener('click', e => {
+  e.preventDefault();
+  if (salesMode) {
+    if (!confirm('確定要登出業務模式嗎？登出後這台裝置會回到訪客模式（看不到價格）。')) return;
+    salesMode = false;
+    localStorage.removeItem(SALES_MODE_KEY);
+    updateSalesModeUI();
+    renderProducts();
+    return;
+  }
+  const code = prompt('請輸入業務登入碼（員工編號）：');
+  if (code === null) return;
+  if (!tryUnlockWithCode(code)) {
+    alert('登入碼不正確，請確認員工編號是否輸入正確。');
+  }
+});
 
 function formatQuoteText(product) {
   const lines = [product.name];
@@ -161,7 +207,7 @@ function renderProducts() {
         ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>
-      ${(!p.specs || p.specs.length === 0) ? `<div class="price">${formatPrice(p.price, p.unit)}</div>` : ''}
+      ${(!p.specs || p.specs.length === 0) ? `<div class="price">${salesMode ? formatPrice(p.price, p.unit) : '登入業務查看價格'}</div>` : ''}
       ${(p.origin || p.packagingSpec) ? `
         <div class="meta-info">
           ${p.origin ? `<span>產地：${escapeHTML(p.origin)}</span>` : ''}
@@ -170,10 +216,10 @@ function renderProducts() {
       ` : ''}
       ${p.specs && p.specs.length ? `
         <ul class="spec-list">
-          ${p.specs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
+          ${p.specs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(salesMode ? s.value : maskPriceText(s.value))}</span></li>`).join('')}
         </ul>
       ` : ''}
-      <button type="button" class="secondary copy-quote-btn" data-id="${p.id}">複製報價</button>
+      ${salesMode ? `<button type="button" class="secondary copy-quote-btn" data-id="${p.id}">複製報價</button>` : ''}
     </div>
   `;
 
@@ -234,6 +280,20 @@ productGrid.addEventListener('click', async e => {
 
 searchInput.addEventListener('input', renderProducts);
 categoryFilter.addEventListener('change', renderProducts);
+
+subscribeToSalesCodes(
+  codes => {
+    validSalesCodes = codes;
+    const storedCode = localStorage.getItem(SALES_MODE_KEY);
+    const shouldUnlock = storedCode && codes.includes(storedCode);
+    if (shouldUnlock !== salesMode) {
+      salesMode = shouldUnlock;
+      updateSalesModeUI();
+      renderProducts();
+    }
+  },
+  err => console.error('讀取業務登入碼失敗', err)
+);
 
 subscribeToProducts(
   products => {

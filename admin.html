@@ -104,6 +104,19 @@
       </div>
 
       <div class="panel">
+        <h2>業務登入碼管理</h2>
+        <p class="hint-text">
+          前台首頁預設是「訪客模式」，看不到價格。業務同事在前台點「業務登入」，輸入這裡設定的員工編號，
+          這台裝置之後就會一直顯示價格，不用每次都登入。
+        </p>
+        <div class="io-actions">
+          <input type="text" id="newSalesCode" placeholder="輸入員工編號，例如 0094" style="max-width:220px;" />
+          <button class="secondary" id="addSalesCodeBtn">新增登入碼</button>
+        </div>
+        <div id="salesCodeList" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="panel">
         <h2>備份與還原</h2>
         <p class="hint-text">
           資料平常都自動存在雲端，不用手動備份。「備份」可以把目前的產品存成一個檔案留底；

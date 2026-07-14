@@ -16,7 +16,9 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON,
-  formatPrice
+  formatPrice,
+  subscribeToSalesCodes,
+  setSalesCodes
 } from './products-service.js';
 
 const loginBox = document.getElementById('loginBox');
@@ -53,9 +55,15 @@ const importBtn = document.getElementById('importBtn');
 const importFile = document.getElementById('importFile');
 const ioMsg = document.getElementById('ioMsg');
 
+const newSalesCode = document.getElementById('newSalesCode');
+const addSalesCodeBtn = document.getElementById('addSalesCodeBtn');
+const salesCodeList = document.getElementById('salesCodeList');
+
 let editingId = null;
 let currentProducts = [];
 let unsubscribeProducts = null;
+let currentSalesCodes = [];
+let unsubscribeSalesCodes = null;
 
 // ---------- 登入 ----------
 
@@ -122,12 +130,25 @@ onAuthStateChanged(auth, user => {
         }
       );
     }
+    if (!unsubscribeSalesCodes) {
+      unsubscribeSalesCodes = subscribeToSalesCodes(
+        codes => {
+          currentSalesCodes = codes;
+          renderSalesCodeList();
+        },
+        err => console.error('讀取業務登入碼失敗', err)
+      );
+    }
   } else {
     loginBox.style.display = 'block';
     adminContent.style.display = 'none';
     if (unsubscribeProducts) {
       unsubscribeProducts();
       unsubscribeProducts = null;
+    }
+    if (unsubscribeSalesCodes) {
+      unsubscribeSalesCodes();
+      unsubscribeSalesCodes = null;
     }
     currentProducts = [];
     resetForm();
@@ -286,6 +307,51 @@ clearAllBtn.addEventListener('click', async () => {
   } catch (err) {
     alert('清空失敗：' + err.message);
   }
+});
+
+// ---------- 業務登入碼管理 ----------
+
+function renderSalesCodeList() {
+  if (currentSalesCodes.length === 0) {
+    salesCodeList.innerHTML = `<p class="hint-text">尚未設定任何登入碼，業務目前都無法登入查看價格。</p>`;
+    return;
+  }
+  salesCodeList.innerHTML = currentSalesCodes.map(code => `
+    <span class="badge" style="display:inline-flex; align-items:center; gap:8px; margin:0 8px 8px 0;">
+      ${escapeHTML(code)}
+      <button type="button" class="danger remove-sales-code" data-code="${escapeHTML(code)}" style="padding:2px 8px; font-size:12px;">移除</button>
+    </span>
+  `).join('');
+
+  salesCodeList.querySelectorAll('.remove-sales-code').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm(`確定要移除登入碼「${btn.dataset.code}」嗎？`)) return;
+      try {
+        await setSalesCodes(currentSalesCodes.filter(c => c !== btn.dataset.code));
+      } catch (err) {
+        alert('移除失敗：' + err.message);
+      }
+    });
+  });
+}
+
+addSalesCodeBtn.addEventListener('click', async () => {
+  const code = newSalesCode.value.trim();
+  if (!code) return;
+  if (currentSalesCodes.includes(code)) {
+    alert('這個登入碼已經存在了');
+    return;
+  }
+  try {
+    await setSalesCodes([...currentSalesCodes, code]);
+    newSalesCode.value = '';
+  } catch (err) {
+    alert('新增失敗：' + err.message);
+  }
+});
+
+newSalesCode.addEventListener('keydown', e => {
+  if (e.key === 'Enter') addSalesCodeBtn.click();
 });
 
 // ---------- 匯出 / 匯入（備份用） ----------

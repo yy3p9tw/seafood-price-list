@@ -10,10 +10,12 @@ import {
   deleteDoc,
   doc,
   getDocs,
-  writeBatch
+  writeBatch,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const productsCol = collection(db, 'products');
+const salesAccessDoc = doc(db, 'settings', 'salesAccess');
 
 function normalize(data) {
   return {
@@ -76,4 +78,17 @@ export function formatPrice(price, unit) {
   if (!price) return '洽詢';
   const formatted = Number(price).toLocaleString('zh-TW');
   return `NT$ ${formatted}${unit ? ' ' + unit : ''}`;
+}
+
+// 業務登入碼清單（用來切換前台訪客/業務模式，不是真正的帳號系統）
+export function subscribeToSalesCodes(callback, onError) {
+  return onSnapshot(
+    salesAccessDoc,
+    snap => callback(Array.isArray(snap.data()?.codes) ? snap.data().codes : []),
+    onError
+  );
+}
+
+export async function setSalesCodes(codes) {
+  await setDoc(salesAccessDoc, { codes });
 }
