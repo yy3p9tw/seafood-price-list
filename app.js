@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes, formatPrice } from './products-service.js?v=6';
+import { subscribeToProducts, subscribeToSalesCodes, formatPrice } from './products-service.js?v=7';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -201,6 +201,8 @@ function renderProducts() {
         if (salesMode || s.key === '備註' || !/\$|洽詢/.test(String(s.value ?? ''))) return s;
         return { key: s.key, value: '－' };
       });
+    const regularSpecs = visibleSpecs.filter(s => s.key !== '備註');
+    const notes = visibleSpecs.filter(s => s.key === '備註');
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
@@ -215,10 +217,18 @@ function renderProducts() {
           ${p.packagingSpec ? `<span>包裝規格：${escapeHTML(p.packagingSpec)}</span>` : ''}
         </div>
       ` : ''}
-      ${visibleSpecs.length ? `
+      ${regularSpecs.length ? `
         <ul class="spec-list">
-          ${visibleSpecs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
+          ${regularSpecs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
         </ul>
+      ` : ''}
+      ${notes.length ? `
+        <div class="spec-notes">
+          <div class="spec-notes-title">備註</div>
+          <ul>
+            ${notes.map(s => `<li>${escapeHTML(s.value)}</li>`).join('')}
+          </ul>
+        </div>
       ` : ''}
       ${salesMode ? `<button type="button" class="secondary copy-quote-btn" data-id="${p.id}">複製報價</button>` : ''}
     </div>

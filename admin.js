@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=6';
+import { auth } from './firebase-config.js?v=7';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=6';
+} from './products-service.js?v=7';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -243,16 +243,20 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
-  productTableBody.innerHTML = currentProducts.map(p => `
+  productTableBody.innerHTML = currentProducts.map(p => {
+    const regularSpecs = (p.specs || []).filter(s => s.key !== '備註');
+    const notes = (p.specs || []).filter(s => s.key === '備註');
+    return `
     <tr>
       <td>${escapeHTML(p.name)}</td>
       <td>${escapeHTML(p.category) || '-'}</td>
       <td>${escapeHTML(p.origin) || '-'}</td>
       <td>${escapeHTML(p.packagingSpec) || '-'}</td>
-      <td>${(p.specs || []).map(s => `${escapeHTML(s.key)}: ${escapeHTML(s.value)}`).join('<br/>') || '-'}</td>
+      <td>${regularSpecs.map(s => `${escapeHTML(s.key)}: ${escapeHTML(s.value)}`).join('<br/>') || '-'}</td>
+      <td>${notes.map(s => escapeHTML(s.value)).join('<br/>') || '-'}</td>
       <td>
         <div class="row-actions">
           <button class="secondary edit-btn" data-id="${p.id}">編輯</button>
@@ -260,7 +264,8 @@ function renderTable() {
         </div>
       </td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   productTableBody.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {

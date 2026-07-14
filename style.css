@@ -288,6 +288,29 @@ main {
   color: var(--color-text-muted);
 }
 
+.spec-notes {
+  background: var(--color-bg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+}
+
+.spec-notes-title {
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.spec-notes ul {
+  list-style: disc;
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--color-text-muted);
+}
+
 .empty-state {
   text-align: center;
   color: var(--color-text-muted);
