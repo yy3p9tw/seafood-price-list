@@ -92,11 +92,16 @@ function formatQuoteText(product) {
   if (product.origin) metaParts.push(`產地：${product.origin}`);
   if (product.packagingSpec) metaParts.push(`包裝：${product.packagingSpec}`);
   if (metaParts.length) lines.push(metaParts.join('｜'));
-  if (product.specs && product.specs.length) {
+  const regularSpecs = (product.specs || []).filter(s => s.key !== '備註');
+  const notes = (product.specs || []).filter(s => s.key === '備註');
+  if (regularSpecs.length) {
     lines.push('—');
-    product.specs.forEach(s => lines.push(`${s.key}：${s.value}`));
+    regularSpecs.forEach(s => lines.push(`${s.key}：${s.value}`));
   } else {
     lines.push(formatPrice(product.price, product.unit));
+  }
+  if (notes.length) {
+    lines.push('備註：' + notes.map(s => s.value).join('；'));
   }
   return lines.join('\n');
 }
@@ -210,7 +215,7 @@ function renderProducts() {
         ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>
-      ${(salesMode && (!p.specs || p.specs.length === 0)) ? `<div class="price">${formatPrice(p.price, p.unit)}</div>` : ''}
+      ${(salesMode && regularSpecs.length === 0) ? `<div class="price">${formatPrice(p.price, p.unit)}</div>` : ''}
       ${(p.origin || p.packagingSpec) ? `
         <div class="meta-info">
           ${p.origin ? `<span>產地：${escapeHTML(p.origin)}</span>` : ''}
