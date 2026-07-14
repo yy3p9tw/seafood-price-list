@@ -53,14 +53,6 @@ function isRecentlyUpdated(product) {
   return product.updatedAt && (Date.now() - product.updatedAt) < RECENT_UPDATE_MS;
 }
 
-// 訪客模式：規格清單裡任何看起來像金額的部分都要遮起來（包含備註裡夾帶的「降$5」這種寫法），
-// 非價格的備註（包冰%、解凍即食等）照常顯示
-function maskPriceText(value) {
-  const str = String(value ?? '');
-  if (!/\$/.test(str)) return str;
-  return str.replace(/\$[\d,]+(\.\d+)?/g, '洽詢');
-}
-
 function updateSalesModeUI() {
   salesModeToggle.textContent = salesMode ? '登出業務模式' : '業務登入';
 }
@@ -200,28 +192,32 @@ function renderProducts() {
 
   renderOverview(products);
 
-  const cardHTML = p => `
+  const cardHTML = p => {
+    // 訪客模式：只給規格本身，任何跟價格/折扣有關的欄位（含金額的備註）整行都不顯示，不留「洽詢」之類的字樣
+    const visibleSpecs = (p.specs || []).filter(s => salesMode || !/\$|洽詢/.test(String(s.value ?? '')));
+    return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
         ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
         ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>
-      ${(!p.specs || p.specs.length === 0) ? `<div class="price">${salesMode ? formatPrice(p.price, p.unit) : '登入業務查看價格'}</div>` : ''}
+      ${(salesMode && (!p.specs || p.specs.length === 0)) ? `<div class="price">${formatPrice(p.price, p.unit)}</div>` : ''}
       ${(p.origin || p.packagingSpec) ? `
         <div class="meta-info">
           ${p.origin ? `<span>產地：${escapeHTML(p.origin)}</span>` : ''}
           ${p.packagingSpec ? `<span>包裝規格：${escapeHTML(p.packagingSpec)}</span>` : ''}
         </div>
       ` : ''}
-      ${p.specs && p.specs.length ? `
+      ${visibleSpecs.length ? `
         <ul class="spec-list">
-          ${p.specs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(salesMode ? s.value : maskPriceText(s.value))}</span></li>`).join('')}
+          ${visibleSpecs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
         </ul>
       ` : ''}
       ${salesMode ? `<button type="button" class="secondary copy-quote-btn" data-id="${p.id}">複製報價</button>` : ''}
     </div>
   `;
+  };
 
   // 依分類分組並插入標題，讓整份目錄第一眼就能看出有哪些大類、方便瀏覽找商品
   const groups = [];
