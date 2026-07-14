@@ -452,6 +452,25 @@ button.danger:hover {
   gap: 10px;
 }
 
+.form-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-section h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.business-section h3 {
+  color: var(--color-danger);
+}
+
 .login-box {
   max-width: 360px;
   margin: 80px auto;

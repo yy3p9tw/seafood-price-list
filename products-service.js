@@ -1,7 +1,7 @@
 // 商品資料存取層：改成直接讀寫 Firestore 雲端資料庫，取代原本的 localStorage/JSON 檔案方案。
 // 前台用 subscribeToProducts 訂閱即時更新（後台一存檔，前台不用重新整理就會自動更新畫面）。
 
-import { db } from './firebase-config.js?v=9';
+import { db } from './firebase-config.js?v=10';
 import {
   collection,
   onSnapshot,
@@ -21,11 +21,12 @@ function normalize(data) {
   return {
     name: data.name || '',
     category: data.category || '',
-    price: Number(data.price) || 0,
-    unit: data.unit || '',
     origin: data.origin || '',
     packagingSpec: data.packagingSpec || '',
     specs: Array.isArray(data.specs) ? data.specs : [],
+    specNotes: Array.isArray(data.specNotes) ? data.specNotes : [],
+    prices: Array.isArray(data.prices) ? data.prices : [],
+    priceNotes: Array.isArray(data.priceNotes) ? data.priceNotes : [],
     updatedAt: data.updatedAt || Date.now()
   };
 }
@@ -72,12 +73,6 @@ export async function importProducts(products) {
 export function exportProductsAsJSON(products) {
   const plain = products.map(({ id, ...rest }) => rest);
   return JSON.stringify(plain, null, 2);
-}
-
-export function formatPrice(price, unit) {
-  if (!price) return '洽詢';
-  const formatted = Number(price).toLocaleString('zh-TW');
-  return `NT$ ${formatted}${unit ? ' ' + unit : ''}`;
 }
 
 // 業務登入碼清單（用來切換前台訪客/業務模式，不是真正的帳號系統）

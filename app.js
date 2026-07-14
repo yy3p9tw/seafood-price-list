@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes, formatPrice } from './products-service.js?v=9';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=10';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -92,16 +92,20 @@ function formatQuoteText(product) {
   if (product.origin) metaParts.push(`產地：${product.origin}`);
   if (product.packagingSpec) metaParts.push(`包裝：${product.packagingSpec}`);
   if (metaParts.length) lines.push(metaParts.join('｜'));
-  const regularSpecs = (product.specs || []).filter(s => s.key !== '備註');
-  const notes = (product.specs || []).filter(s => s.key === '備註');
-  if (regularSpecs.length) {
+  if ((product.specs || []).length) {
     lines.push('—');
-    regularSpecs.forEach(s => lines.push(`${s.key}：${s.value}`));
-  } else {
-    lines.push(formatPrice(product.price, product.unit));
+    product.specs.forEach(s => lines.push(`${s.key}：${s.value}`));
   }
-  if (notes.length) {
-    lines.push('備註：' + notes.map(s => s.value).join('；'));
+  if ((product.specNotes || []).length) {
+    lines.push('備註：' + product.specNotes.join('；'));
+  }
+  // 複製報價按鈕只有業務模式才看得到，所以這裡可以直接附上業務價格
+  if ((product.prices || []).length) {
+    lines.push('—');
+    product.prices.forEach(s => lines.push(`${s.key}：${s.value}`));
+  }
+  if ((product.priceNotes || []).length) {
+    lines.push('業務備註：' + product.priceNotes.join('；'));
   }
   return lines.join('\n');
 }
@@ -126,7 +130,10 @@ function productMatchesKeyword(product, keyword) {
     product.category,
     product.origin,
     product.packagingSpec,
-    ...(product.specs || []).flatMap(s => [s.key, s.value])
+    ...(product.specs || []).flatMap(s => [s.key, s.value]),
+    ...(product.specNotes || []),
+    ...(product.prices || []).flatMap(s => [s.key, s.value]),
+    ...(product.priceNotes || [])
   ];
   return haystacks.some(text => (text || '').toLowerCase().includes(keyword));
 }
@@ -198,16 +205,12 @@ function renderProducts() {
   renderOverview(products);
 
   const cardHTML = p => {
-    // 訪客模式：規格名稱（尺寸/等級）一律照顯示，只有價格本身不顯示；
-    // 純文字備註如果整句都是在講價格/折扣（例如「降$5」「20件以上不寄庫」這種備註），才整行隱藏
-    const visibleSpecs = (p.specs || [])
-      .filter(s => salesMode || s.key !== '備註' || !/\$|洽詢/.test(String(s.value ?? '')))
-      .map(s => {
-        if (salesMode || s.key === '備註' || !/\$|洽詢/.test(String(s.value ?? ''))) return s;
-        return { key: s.key, value: '－' };
-      });
-    const regularSpecs = visibleSpecs.filter(s => s.key !== '備註');
-    const notes = visibleSpecs.filter(s => s.key === '備註');
+    // 訪客規格（specs/specNotes）任何人都看得到；業務價格（prices/priceNotes）只有業務模式才顯示，
+    // 兩份資料在後台是分開輸入的，這裡不需要再用文字規則去猜哪一行是價格
+    const specs = p.specs || [];
+    const specNotes = p.specNotes || [];
+    const prices = salesMode ? (p.prices || []) : [];
+    const priceNotes = salesMode ? (p.priceNotes || []) : [];
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
@@ -215,23 +218,35 @@ function renderProducts() {
         ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>
-      ${(salesMode && regularSpecs.length === 0) ? `<div class="price">${formatPrice(p.price, p.unit)}</div>` : ''}
       ${(p.origin || p.packagingSpec) ? `
         <div class="meta-info">
           ${p.origin ? `<span>產地：${escapeHTML(p.origin)}</span>` : ''}
           ${p.packagingSpec ? `<span>包裝規格：${escapeHTML(p.packagingSpec)}</span>` : ''}
         </div>
       ` : ''}
-      ${regularSpecs.length ? `
+      ${specs.length ? `
         <ul class="spec-list">
-          ${regularSpecs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
+          ${specs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
         </ul>
       ` : ''}
-      ${notes.length ? `
+      ${specNotes.length ? `
         <div class="spec-notes">
           <div class="spec-notes-title">備註</div>
           <ul>
-            ${notes.map(s => `<li>${escapeHTML(s.value)}</li>`).join('')}
+            ${specNotes.map(n => `<li>${escapeHTML(n)}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''}
+      ${prices.length ? `
+        <ul class="spec-list">
+          ${prices.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
+        </ul>
+      ` : ''}
+      ${priceNotes.length ? `
+        <div class="spec-notes">
+          <div class="spec-notes-title">業務備註</div>
+          <ul>
+            ${priceNotes.map(n => `<li>${escapeHTML(n)}</li>`).join('')}
           </ul>
         </div>
       ` : ''}

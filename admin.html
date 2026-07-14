@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 - 產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=10" />
 </head>
 <body>
   <header class="site-header">
@@ -50,10 +50,6 @@
               <datalist id="categoryList"></datalist>
             </div>
             <div class="field">
-              <label>單位（選填）</label>
-              <input type="text" id="fieldUnit" placeholder="例如：/斤、/箱、/尾" />
-            </div>
-            <div class="field">
               <label>產地</label>
               <input type="text" id="fieldOrigin" list="originList" placeholder="例如：台灣澎湖、宜蘭南方澳" />
               <datalist id="originList"></datalist>
@@ -63,14 +59,31 @@
               <input type="text" id="fieldPackaging" list="packagingList" placeholder="例如：1台斤/包、5公斤/箱" />
               <datalist id="packagingList"></datalist>
             </div>
+          </div>
+
+          <div class="form-section guest-section">
+            <h3>訪客規格（任何人都看得到，絕對不要填價格）</h3>
             <div class="field full">
-              <label>規格 (Specs)</label>
-              <div id="specRows"></div>
-              <button type="button" class="secondary" id="addSpecBtn">+ 新增規格欄位</button>
+              <label>規格（尺寸/等級等描述性內容）</label>
+              <div id="guestSpecRows"></div>
+              <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
             </div>
             <div class="field full">
-              <label>備註（選填，前台會獨立顯示，一行一則）</label>
-              <textarea id="fieldNotes" rows="3" placeholder="例如：20件以上不寄庫&#10;每日現貨依實際到貨為主"></textarea>
+              <label>訪客備註（選填，一行一則）</label>
+              <textarea id="fieldGuestNotes" rows="3" placeholder="例如：解凍即食&#10;每日現貨依實際到貨為主"></textarea>
+            </div>
+          </div>
+
+          <div class="form-section business-section">
+            <h3>業務價格（只有業務登入後才看得到）</h3>
+            <div class="field full">
+              <label>價格（沒有價格的規格就不用新增這一列）</label>
+              <div id="priceRows"></div>
+              <button type="button" class="secondary" id="addPriceBtn">+ 新增價格欄位</button>
+            </div>
+            <div class="field full">
+              <label>業務備註（選填，一行一則，例如折扣、數量門檻）</label>
+              <textarea id="fieldPriceNotes" rows="3" placeholder="例如：20件以上降$5&#10;有量另可議價"></textarea>
             </div>
           </div>
           <div class="form-actions">
@@ -93,8 +106,10 @@
                 <th>分類</th>
                 <th>產地</th>
                 <th>包裝規格</th>
-                <th>規格</th>
-                <th>備註</th>
+                <th>訪客規格</th>
+                <th>訪客備註</th>
+                <th>業務價格</th>
+                <th>業務備註</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -133,6 +148,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=9"></script>
+  <script type="module" src="admin.js?v=10"></script>
 </body>
 </html>
