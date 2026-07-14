@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=4';
+import { auth } from './firebase-config.js?v=5';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -16,10 +16,9 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON,
-  formatPrice,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=4';
+} from './products-service.js?v=5';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -38,7 +37,6 @@ const cancelEditBtn = document.getElementById('cancelEditBtn');
 const formMsg = document.getElementById('formMsg');
 const fieldName = document.getElementById('fieldName');
 const fieldCategory = document.getElementById('fieldCategory');
-const fieldPrice = document.getElementById('fieldPrice');
 const fieldUnit = document.getElementById('fieldUnit');
 const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldPackaging = document.getElementById('fieldPackaging');
@@ -200,7 +198,6 @@ function loadProductIntoForm(product) {
   editingId = product.id;
   fieldName.value = product.name;
   fieldCategory.value = product.category;
-  fieldPrice.value = product.price;
   fieldUnit.value = product.unit;
   fieldOrigin.value = product.origin || '';
   fieldPackaging.value = product.packagingSpec || '';
@@ -217,7 +214,6 @@ productForm.addEventListener('submit', async e => {
   const data = {
     name: fieldName.value.trim(),
     category: fieldCategory.value.trim(),
-    price: fieldPrice.value,
     unit: fieldUnit.value.trim(),
     origin: fieldOrigin.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
@@ -247,7 +243,7 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
   productTableBody.innerHTML = currentProducts.map(p => `
@@ -256,7 +252,6 @@ function renderTable() {
       <td>${escapeHTML(p.category) || '-'}</td>
       <td>${escapeHTML(p.origin) || '-'}</td>
       <td>${escapeHTML(p.packagingSpec) || '-'}</td>
-      <td>${formatPrice(p.price, p.unit)}</td>
       <td>${(p.specs || []).map(s => `${escapeHTML(s.key)}: ${escapeHTML(s.value)}`).join('<br/>') || '-'}</td>
       <td>
         <div class="row-actions">
