@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=13';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=14';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -198,12 +198,13 @@ function renderProducts() {
   renderOverview(products);
 
   const cardHTML = p => {
-    // 訪客模式只顯示訪客規格/備註；業務模式只顯示業務價格/備註 —
-    // 兩邊資料完全分開顯示，業務不用看到訪客內容，訪客也看不到業務內容
-    const specs = salesMode ? [] : (p.specs || []);
-    const specNotes = salesMode ? [] : (p.specNotes || []);
+    // 訪客模式只顯示訪客規格/備註；業務模式只顯示業務價格/備註，兩邊資料完全分開顯示。
+    // 業務價格可以是空的（還沒報價），這種情況業務模式就退回顯示訪客規格，不要整段空白
     const prices = salesMode ? (p.prices || []) : [];
     const priceNotes = salesMode ? (p.priceNotes || []) : [];
+    const showGuestFallback = !salesMode || prices.length === 0;
+    const specs = showGuestFallback ? (p.specs || []) : [];
+    const specNotes = showGuestFallback ? (p.specNotes || []) : [];
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
