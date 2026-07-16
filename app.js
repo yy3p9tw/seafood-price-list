@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=11';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=12';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -92,14 +92,17 @@ function formatQuoteText(product) {
   if (product.origin) metaParts.push(`產地：${product.origin}`);
   if (product.packagingSpec) metaParts.push(`包裝：${product.packagingSpec}`);
   if (metaParts.length) lines.push(metaParts.join('｜'));
-  if ((product.specs || []).length) {
+  // 複製報價按鈕只有業務模式才看得到，所以這裡可以直接附上業務價格；
+  // 規格列如果沒有額外描述、又跟價格列同一個規格名稱，就不用重複列出
+  const priceKeys = new Set((product.prices || []).map(s => s.key));
+  const specs = (product.specs || []).filter(s => !(!s.value && priceKeys.has(s.key)));
+  if (specs.length) {
     lines.push('—');
-    product.specs.forEach(s => lines.push(`${s.key}：${s.value}`));
+    specs.forEach(s => lines.push(`${s.key}：${s.value}`));
   }
   if ((product.specNotes || []).length) {
     lines.push('備註：' + product.specNotes.join('；'));
   }
-  // 複製報價按鈕只有業務模式才看得到，所以這裡可以直接附上業務價格
   if ((product.prices || []).length) {
     lines.push('—');
     product.prices.forEach(s => lines.push(`${s.key}：${s.value}`));
@@ -207,10 +210,13 @@ function renderProducts() {
   const cardHTML = p => {
     // 訪客規格（specs/specNotes）任何人都看得到；業務價格（prices/priceNotes）只有業務模式才顯示，
     // 兩份資料在後台是分開輸入的，這裡不需要再用文字規則去猜哪一行是價格
-    const specs = p.specs || [];
-    const specNotes = p.specNotes || [];
     const prices = salesMode ? (p.prices || []) : [];
     const priceNotes = salesMode ? (p.priceNotes || []) : [];
+    // 業務模式下，如果規格列沒有額外描述（value 空白），且同樣的規格已經在價格列出現，
+    // 就不用再重複顯示一次沒有價格的空白列
+    const priceKeys = new Set(prices.map(s => s.key));
+    const specs = (p.specs || []).filter(s => !(salesMode && !s.value && priceKeys.has(s.key)));
+    const specNotes = p.specNotes || [];
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
