@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 - 產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
   <header class="site-header">
@@ -64,6 +64,9 @@
           <div class="form-section guest-section">
             <h3>訪客規格（任何人都看得到，絕對不要填價格）</h3>
             <div class="field full">
+              <label><input type="checkbox" id="fieldHiddenFromGuest" /> 訪客看不到這個商品（整項商品僅業務可見）</label>
+            </div>
+            <div class="field full">
               <label>規格（尺寸/等級等描述性內容）</label>
               <div id="guestSpecRows"></div>
               <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
@@ -103,6 +106,7 @@
             <thead>
               <tr>
                 <th>名稱</th>
+                <th>訪客可見</th>
                 <th>分類</th>
                 <th>產地</th>
                 <th>包裝規格</th>
@@ -148,6 +152,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=14"></script>
+  <script type="module" src="admin.js?v=15"></script>
 </body>
 </html>

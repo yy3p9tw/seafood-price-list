@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=14';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=15';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -63,6 +63,7 @@ function tryUnlockWithCode(code) {
     salesMode = true;
     localStorage.setItem(SALES_MODE_KEY, code.trim());
     updateSalesModeUI();
+    renderCategoryOptions();
     renderProducts();
     return true;
   }
@@ -76,6 +77,7 @@ salesModeToggle.addEventListener('click', e => {
     salesMode = false;
     localStorage.removeItem(SALES_MODE_KEY);
     updateSalesModeUI();
+    renderCategoryOptions();
     renderProducts();
     return;
   }
@@ -108,8 +110,14 @@ function getCategoriesFrom(products) {
   return Array.from(set).sort();
 }
 
+// 有些商品整項只給業務看（例如尚未正式上架、只是業務內部參考的品項），
+// 訪客模式下要整個從清單裡拿掉，不只是價格不顯示
+function getVisibleProducts() {
+  return salesMode ? allProducts : allProducts.filter(p => !p.hiddenFromGuest);
+}
+
 function renderCategoryOptions() {
-  const categories = getCategoriesFrom(allProducts);
+  const categories = getCategoriesFrom(getVisibleProducts());
   const current = categoryFilter.value;
   categoryFilter.innerHTML = '<option value="">全部分類</option>' +
     categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
@@ -169,7 +177,7 @@ function renderOverview(products) {
 }
 
 function renderProducts() {
-  let products = allProducts;
+  let products = getVisibleProducts();
 
   const keyword = searchInput.value.trim().toLowerCase();
   products = products.filter(p => productMatchesKeyword(p, keyword));
@@ -315,6 +323,7 @@ subscribeToSalesCodes(
     if (shouldUnlock !== salesMode) {
       salesMode = shouldUnlock;
       updateSalesModeUI();
+      renderCategoryOptions();
       renderProducts();
     }
   },
