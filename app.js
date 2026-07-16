@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=10';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=11';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -17,16 +17,16 @@ let validSalesCodes = [];
 let salesMode = false;
 
 const RECENT_UPDATE_MS = 14 * 24 * 60 * 60 * 1000; // 14 天內視為「本次更新」
-const CATEGORY_ORDER = ['軟體類', '蝦類', '魚類', '螺貝類', '其他'];
+const CATEGORY_ORDER = ['軟體類', '蝦蟹類', '魚類', '螺貝類', '其他調理類'];
 
 // 同一系列商品（例如「軟絲 3A」「軟絲 4A」）在總覽區只顯示一個名稱，不用每個規格都列一個
 const OVERVIEW_GROUP_PREFIXES = [
   '軟絲 ',
   '藍龍軟絲 ',
-  '調理白蝦仁 ',
+  '白蝦仁(調理) ',
   '白蝦AZU(850) ',
   '白蝦 藍翡翠Ａ(850) ',
-  '調理干貝（俗稱美國干貝）',
+  '冷凍干貝(調理)',
 ];
 
 function getOverviewName(name) {
