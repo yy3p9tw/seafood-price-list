@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 - 產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=16" />
+  <link rel="stylesheet" href="style.css?v=17" />
 </head>
 <body>
   <header class="site-header">
@@ -64,7 +64,11 @@
           <div class="form-section guest-section">
             <h3>商品照片（訪客卡片會用照片取代規格文字，沒有照片才會顯示規格文字）</h3>
             <div class="field full">
-              <input type="file" id="photoInput" accept="image/*" multiple />
+              <label>貼上照片網址（例如上傳到 Google 相簿/雲端硬碟後取得的分享連結）</label>
+              <div class="io-actions">
+                <input type="text" id="photoUrlInput" placeholder="貼上照片網址..." style="flex:1;" />
+                <button type="button" class="secondary" id="addPhotoUrlBtn">+ 新增照片</button>
+              </div>
               <div id="photoPreviewGrid" class="photo-preview-grid"></div>
               <p class="hint-text" id="photoUploadMsg"></p>
             </div>
@@ -162,6 +166,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=16"></script>
+  <script type="module" src="admin.js?v=17"></script>
 </body>
 </html>

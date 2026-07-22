@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=16';
+import { auth } from './firebase-config.js?v=17';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -17,10 +17,8 @@ import {
   importProducts,
   exportProductsAsJSON,
   subscribeToSalesCodes,
-  setSalesCodes,
-  uploadProductPhoto,
-  deleteProductPhoto
-} from './products-service.js?v=16';
+  setSalesCodes
+} from './products-service.js?v=17';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -42,7 +40,8 @@ const fieldCategory = document.getElementById('fieldCategory');
 const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldPackaging = document.getElementById('fieldPackaging');
 const fieldHiddenFromGuest = document.getElementById('fieldHiddenFromGuest');
-const photoInput = document.getElementById('photoInput');
+const photoUrlInput = document.getElementById('photoUrlInput');
+const addPhotoUrlBtn = document.getElementById('addPhotoUrlBtn');
 const photoPreviewGrid = document.getElementById('photoPreviewGrid');
 const photoUploadMsg = document.getElementById('photoUploadMsg');
 const guestSpecRows = document.getElementById('guestSpecRows');
@@ -197,7 +196,7 @@ function escapeHTML(str) {
   return div.innerHTML;
 }
 
-// ---------- 商品照片 (上傳到 Firebase Storage，Firestore 只存網址) ----------
+// ---------- 商品照片 (直接貼網址，Firestore 只存網址字串) ----------
 
 function renderPhotoPreview() {
   photoPreviewGrid.innerHTML = currentPhotos.map((url, i) => `
@@ -207,37 +206,27 @@ function renderPhotoPreview() {
     </div>
   `).join('');
   photoPreviewGrid.querySelectorAll('.photo-preview-remove').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const url = currentPhotos[Number(btn.dataset.index)];
-      btn.disabled = true;
-      try {
-        await deleteProductPhoto(url);
-      } catch (err) {
-        console.error('刪除照片失敗', err);
-      }
-      currentPhotos = currentPhotos.filter(u => u !== url);
+    btn.addEventListener('click', () => {
+      currentPhotos.splice(Number(btn.dataset.index), 1);
       renderPhotoPreview();
     });
   });
 }
 
-photoInput.addEventListener('change', async () => {
-  const files = Array.from(photoInput.files);
-  if (!files.length) return;
-  photoUploadMsg.style.color = '';
-  photoUploadMsg.textContent = `上傳中...（${files.length} 張）`;
-  try {
-    for (const file of files) {
-      const url = await uploadProductPhoto(file);
-      currentPhotos.push(url);
-      renderPhotoPreview();
-    }
-    photoUploadMsg.textContent = '上傳完成';
-  } catch (err) {
-    photoUploadMsg.style.color = 'var(--color-danger)';
-    photoUploadMsg.textContent = '上傳失敗：' + err.message;
-  } finally {
-    photoInput.value = '';
+function addPhotoUrl() {
+  const url = photoUrlInput.value.trim();
+  if (!url) return;
+  currentPhotos.push(url);
+  photoUrlInput.value = '';
+  photoUploadMsg.textContent = '';
+  renderPhotoPreview();
+}
+
+addPhotoUrlBtn.addEventListener('click', addPhotoUrl);
+photoUrlInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    addPhotoUrl();
   }
 });
 
