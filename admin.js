@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=15';
+import { auth } from './firebase-config.js?v=16';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -17,8 +17,10 @@ import {
   importProducts,
   exportProductsAsJSON,
   subscribeToSalesCodes,
-  setSalesCodes
-} from './products-service.js?v=15';
+  setSalesCodes,
+  uploadProductPhoto,
+  deleteProductPhoto
+} from './products-service.js?v=16';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -40,6 +42,9 @@ const fieldCategory = document.getElementById('fieldCategory');
 const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldPackaging = document.getElementById('fieldPackaging');
 const fieldHiddenFromGuest = document.getElementById('fieldHiddenFromGuest');
+const photoInput = document.getElementById('photoInput');
+const photoPreviewGrid = document.getElementById('photoPreviewGrid');
+const photoUploadMsg = document.getElementById('photoUploadMsg');
 const guestSpecRows = document.getElementById('guestSpecRows');
 const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
@@ -62,6 +67,7 @@ const addSalesCodeBtn = document.getElementById('addSalesCodeBtn');
 const salesCodeList = document.getElementById('salesCodeList');
 
 let editingId = null;
+let currentPhotos = [];
 let currentProducts = [];
 let unsubscribeProducts = null;
 let currentSalesCodes = [];
@@ -191,11 +197,58 @@ function escapeHTML(str) {
   return div.innerHTML;
 }
 
+// ---------- 商品照片 (上傳到 Firebase Storage，Firestore 只存網址) ----------
+
+function renderPhotoPreview() {
+  photoPreviewGrid.innerHTML = currentPhotos.map((url, i) => `
+    <div class="photo-preview-item">
+      <img src="${escapeHTML(url)}" alt="" />
+      <button type="button" class="photo-preview-remove" data-index="${i}">×</button>
+    </div>
+  `).join('');
+  photoPreviewGrid.querySelectorAll('.photo-preview-remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const url = currentPhotos[Number(btn.dataset.index)];
+      btn.disabled = true;
+      try {
+        await deleteProductPhoto(url);
+      } catch (err) {
+        console.error('刪除照片失敗', err);
+      }
+      currentPhotos = currentPhotos.filter(u => u !== url);
+      renderPhotoPreview();
+    });
+  });
+}
+
+photoInput.addEventListener('change', async () => {
+  const files = Array.from(photoInput.files);
+  if (!files.length) return;
+  photoUploadMsg.style.color = '';
+  photoUploadMsg.textContent = `上傳中...（${files.length} 張）`;
+  try {
+    for (const file of files) {
+      const url = await uploadProductPhoto(file);
+      currentPhotos.push(url);
+      renderPhotoPreview();
+    }
+    photoUploadMsg.textContent = '上傳完成';
+  } catch (err) {
+    photoUploadMsg.style.color = 'var(--color-danger)';
+    photoUploadMsg.textContent = '上傳失敗：' + err.message;
+  } finally {
+    photoInput.value = '';
+  }
+});
+
 // ---------- 表單 ----------
 
 function resetForm() {
   editingId = null;
   productForm.reset();
+  currentPhotos = [];
+  renderPhotoPreview();
+  photoUploadMsg.textContent = '';
   fieldHiddenFromGuest.checked = false;
   guestSpecRows.innerHTML = '';
   fieldGuestNotes.value = '';
@@ -213,6 +266,9 @@ function loadProductIntoForm(product) {
   fieldCategory.value = product.category;
   fieldOrigin.value = product.origin || '';
   fieldPackaging.value = product.packagingSpec || '';
+  currentPhotos = [...(product.photos || [])];
+  renderPhotoPreview();
+  photoUploadMsg.textContent = '';
   fieldHiddenFromGuest.checked = !!product.hiddenFromGuest;
   guestSpecRows.innerHTML = '';
   (product.specs || []).forEach(s => addKeyValueRow(guestSpecRows, s.key, s.value, '規格名稱，例如：20/30', '規格內容，例如：尺寸/等級'));
@@ -234,6 +290,7 @@ productForm.addEventListener('submit', async e => {
     origin: fieldOrigin.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
     hiddenFromGuest: fieldHiddenFromGuest.checked,
+    photos: currentPhotos,
     specs: getRowsFrom(guestSpecRows),
     specNotes: getNotesFrom(fieldGuestNotes),
     prices: getRowsFrom(priceRows),
@@ -263,13 +320,14 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
   productTableBody.innerHTML = currentProducts.map(p => {
     return `
     <tr>
       <td>${escapeHTML(p.name)}</td>
+      <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
       <td>${p.hiddenFromGuest ? '<span style="color:var(--color-danger); font-weight:600;">僅業務</span>' : '是'}</td>
       <td>${escapeHTML(p.category) || '-'}</td>
       <td>${escapeHTML(p.origin) || '-'}</td>

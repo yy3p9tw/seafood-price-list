@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=15';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=16';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -51,6 +51,21 @@ function escapeHTML(str) {
 
 function isRecentlyUpdated(product) {
   return product.updatedAt && (Date.now() - product.updatedAt) < RECENT_UPDATE_MS;
+}
+
+// 照片燈箱：點縮圖放大看，點任何地方關閉
+const lightbox = document.createElement('div');
+lightbox.className = 'photo-lightbox';
+lightbox.innerHTML = '<img />';
+lightbox.addEventListener('click', () => lightbox.classList.remove('open'));
+document.body.appendChild(lightbox);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') lightbox.classList.remove('open');
+});
+
+function openLightbox(src) {
+  lightbox.querySelector('img').src = src;
+  lightbox.classList.add('open');
 }
 
 function updateSalesModeUI() {
@@ -213,6 +228,8 @@ function renderProducts() {
     const showGuestFallback = !salesMode || prices.length === 0;
     const specs = showGuestFallback ? (p.specs || []) : [];
     const specNotes = showGuestFallback ? (p.specNotes || []) : [];
+    // 有照片就用照片牆取代規格文字（訪客/業務都看得到照片），沒照片才退回顯示規格文字
+    const photos = p.photos || [];
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
@@ -226,7 +243,11 @@ function renderProducts() {
           ${p.packagingSpec ? `<span>包裝規格：${escapeHTML(p.packagingSpec)}</span>` : ''}
         </div>
       ` : ''}
-      ${specs.length ? `
+      ${photos.length ? `
+        <div class="photo-strip">
+          ${photos.map((url, i) => `<img class="photo-thumb" src="${escapeHTML(url)}" data-product-id="${p.id}" data-photo-index="${i}" alt="${escapeHTML(p.name)}" loading="lazy" />`).join('')}
+        </div>
+      ` : specs.length ? `
         <ul class="spec-list">
           ${specs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
         </ul>
@@ -294,6 +315,11 @@ window.addEventListener('scroll', () => {
 });
 
 productGrid.addEventListener('click', async e => {
+  const thumb = e.target.closest('.photo-thumb');
+  if (thumb) {
+    openLightbox(thumb.src);
+    return;
+  }
   const btn = e.target.closest('.copy-quote-btn');
   if (!btn) return;
   const product = allProducts.find(p => p.id === btn.dataset.id);

@@ -1,7 +1,7 @@
 // 商品資料存取層：改成直接讀寫 Firestore 雲端資料庫，取代原本的 localStorage/JSON 檔案方案。
 // 前台用 subscribeToProducts 訂閱即時更新（後台一存檔，前台不用重新整理就會自動更新畫面）。
 
-import { db } from './firebase-config.js?v=15';
+import { db, storage } from './firebase-config.js?v=16';
 import {
   collection,
   onSnapshot,
@@ -13,6 +13,12 @@ import {
   writeBatch,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-storage.js";
 
 const productsCol = collection(db, 'products');
 const salesAccessDoc = doc(db, 'settings', 'salesAccess');
@@ -28,6 +34,7 @@ function normalize(data) {
     prices: Array.isArray(data.prices) ? data.prices : [],
     priceNotes: Array.isArray(data.priceNotes) ? data.priceNotes : [],
     hiddenFromGuest: !!data.hiddenFromGuest,
+    photos: Array.isArray(data.photos) ? data.photos : [],
     updatedAt: data.updatedAt || Date.now()
   };
 }
@@ -87,4 +94,16 @@ export function subscribeToSalesCodes(callback, onError) {
 
 export async function setSalesCodes(codes) {
   await setDoc(salesAccessDoc, { codes });
+}
+
+// 商品照片：存到 Firebase Storage，Firestore 只存下載網址
+export async function uploadProductPhoto(file) {
+  const path = `products/${crypto.randomUUID()}-${file.name}`;
+  const fileRef = ref(storage, path);
+  await uploadBytes(fileRef, file);
+  return getDownloadURL(fileRef);
+}
+
+export async function deleteProductPhoto(url) {
+  await deleteObject(ref(storage, url));
 }

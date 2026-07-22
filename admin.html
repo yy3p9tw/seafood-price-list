@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 - 產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=15" />
+  <link rel="stylesheet" href="style.css?v=16" />
 </head>
 <body>
   <header class="site-header">
@@ -62,12 +62,21 @@
           </div>
 
           <div class="form-section guest-section">
+            <h3>商品照片（訪客卡片會用照片取代規格文字，沒有照片才會顯示規格文字）</h3>
+            <div class="field full">
+              <input type="file" id="photoInput" accept="image/*" multiple />
+              <div id="photoPreviewGrid" class="photo-preview-grid"></div>
+              <p class="hint-text" id="photoUploadMsg"></p>
+            </div>
+          </div>
+
+          <div class="form-section guest-section">
             <h3>訪客規格（任何人都看得到，絕對不要填價格）</h3>
             <div class="field full">
               <label><input type="checkbox" id="fieldHiddenFromGuest" /> 訪客看不到這個商品（整項商品僅業務可見）</label>
             </div>
             <div class="field full">
-              <label>規格（尺寸/等級等描述性內容）</label>
+              <label>規格（尺寸/等級等描述性內容，沒有照片時會顯示這個）</label>
               <div id="guestSpecRows"></div>
               <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
             </div>
@@ -106,6 +115,7 @@
             <thead>
               <tr>
                 <th>名稱</th>
+                <th>照片</th>
                 <th>訪客可見</th>
                 <th>分類</th>
                 <th>產地</th>
@@ -152,6 +162,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=15"></script>
+  <script type="module" src="admin.js?v=16"></script>
 </body>
 </html>
