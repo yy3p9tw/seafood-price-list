@@ -528,6 +528,34 @@ button.danger:hover {
   cursor: pointer;
 }
 
+.library-item {
+  cursor: pointer;
+}
+
+.library-item img {
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.library-item.selected img {
+  border: 3px solid var(--color-primary);
+}
+
+.library-item.selected::after {
+  content: '✓';
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .form-actions {
   margin-top: 16px;
   display: flex;

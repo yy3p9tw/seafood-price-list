@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>後台管理 - 產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=17" />
+  <link rel="stylesheet" href="style.css?v=18" />
 </head>
 <body>
   <header class="site-header">
@@ -64,13 +64,21 @@
           <div class="form-section guest-section">
             <h3>商品照片（訪客卡片會用照片取代規格文字，沒有照片才會顯示規格文字）</h3>
             <div class="field full">
-              <label>貼上照片網址（例如上傳到 Google 相簿/雲端硬碟後取得的分享連結）</label>
+              <label>已選擇的照片</label>
+              <div id="photoPreviewGrid" class="photo-preview-grid"></div>
+              <p class="hint-text" id="photoUploadMsg"></p>
+            </div>
+            <div class="field full">
+              <label>從照片庫選擇（先把照片放進 GitHub 的 images 資料夾，再回來點選）</label>
+              <button type="button" class="secondary" id="loadImageLibraryBtn">瀏覽 / 重新整理照片庫</button>
+              <div id="imageLibraryGrid" class="photo-preview-grid"></div>
+            </div>
+            <div class="field full">
+              <label>或直接貼照片網址</label>
               <div class="io-actions">
                 <input type="text" id="photoUrlInput" placeholder="貼上照片網址..." style="flex:1;" />
                 <button type="button" class="secondary" id="addPhotoUrlBtn">+ 新增照片</button>
               </div>
-              <div id="photoPreviewGrid" class="photo-preview-grid"></div>
-              <p class="hint-text" id="photoUploadMsg"></p>
             </div>
           </div>
 
@@ -166,6 +174,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=17"></script>
+  <script type="module" src="admin.js?v=18"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=17';
+import { auth } from './firebase-config.js?v=18';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=17';
+} from './products-service.js?v=18';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -44,6 +44,8 @@ const photoUrlInput = document.getElementById('photoUrlInput');
 const addPhotoUrlBtn = document.getElementById('addPhotoUrlBtn');
 const photoPreviewGrid = document.getElementById('photoPreviewGrid');
 const photoUploadMsg = document.getElementById('photoUploadMsg');
+const loadImageLibraryBtn = document.getElementById('loadImageLibraryBtn');
+const imageLibraryGrid = document.getElementById('imageLibraryGrid');
 const guestSpecRows = document.getElementById('guestSpecRows');
 const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
@@ -209,6 +211,7 @@ function renderPhotoPreview() {
     btn.addEventListener('click', () => {
       currentPhotos.splice(Number(btn.dataset.index), 1);
       renderPhotoPreview();
+      renderImageLibrary();
     });
   });
 }
@@ -227,6 +230,52 @@ photoUrlInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     addPhotoUrl();
+  }
+});
+
+// ---------- 照片庫 (瀏覽 GitHub images 資料夾裡已經上傳的照片，點選即可加入) ----------
+
+const IMAGES_PAGES_BASE = 'https://yy3p9tw.github.io/seafood-price-list/images/';
+let libraryFiles = null;
+
+function renderImageLibrary() {
+  if (!libraryFiles) return;
+  if (!libraryFiles.length) {
+    imageLibraryGrid.innerHTML = `<p class="hint-text">images 資料夾裡還沒有照片</p>`;
+    return;
+  }
+  imageLibraryGrid.innerHTML = libraryFiles.map(url => {
+    const selected = currentPhotos.includes(url);
+    return `
+      <div class="photo-preview-item library-item${selected ? ' selected' : ''}" data-url="${escapeHTML(url)}">
+        <img src="${escapeHTML(url)}" alt="" loading="lazy" />
+      </div>
+    `;
+  }).join('');
+  imageLibraryGrid.querySelectorAll('.library-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const url = item.dataset.url;
+      const idx = currentPhotos.indexOf(url);
+      if (idx === -1) currentPhotos.push(url);
+      else currentPhotos.splice(idx, 1);
+      renderPhotoPreview();
+      renderImageLibrary();
+    });
+  });
+}
+
+loadImageLibraryBtn.addEventListener('click', async () => {
+  imageLibraryGrid.innerHTML = `<p class="hint-text">載入中...</p>`;
+  try {
+    const res = await fetch('https://api.github.com/repos/yy3p9tw/seafood-price-list/contents/images');
+    if (!res.ok) throw new Error('讀取失敗 (' + res.status + ')');
+    const entries = await res.json();
+    libraryFiles = entries
+      .filter(f => /\.(jpe?g|png|gif|webp)$/i.test(f.name))
+      .map(f => IMAGES_PAGES_BASE + f.name);
+    renderImageLibrary();
+  } catch (err) {
+    imageLibraryGrid.innerHTML = `<p class="hint-text" style="color:var(--color-danger);">讀取照片庫失敗：${escapeHTML(err.message)}</p>`;
   }
 });
 
