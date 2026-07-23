@@ -218,6 +218,8 @@ main {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .badge-row {
@@ -320,6 +322,7 @@ main {
   margin: 2px -4px;
   padding-left: 4px;
   padding-right: 4px;
+  max-width: 100%;
 }
 
 .photo-thumb {
@@ -337,13 +340,17 @@ main {
 .photo-lightbox {
   display: none;
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.85);
   z-index: 1000;
   align-items: center;
   justify-content: center;
   padding: 24px;
   cursor: zoom-out;
+  box-sizing: border-box;
 }
 
 .photo-lightbox.open {
