@@ -7,6 +7,10 @@
   --color-primary: #0C3F52;
   --color-primary-hover: #082C3B;
   --color-primary-soft: #DCEEF3;
+  --color-accent-coral: #D9503D;
+  --color-accent-coral-soft: #FFE7E1;
+  --color-accent-green: #4FA98A;
+  --color-accent-green-soft: #E1F2EC;
   --color-danger: #dc2626;
   --color-danger-hover: #b91c1c;
   --color-success: #16a34a;
@@ -97,7 +101,7 @@ main {
   font-weight: 700;
   margin: 32px 0 14px;
   padding-bottom: 8px;
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-accent-green);
   color: var(--color-text);
 }
 
@@ -188,6 +192,11 @@ main {
   font-size: 14px;
   font-weight: 600;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  background: var(--color-accent-green);
+}
+
+.back-to-overview:hover {
+  background: #5CA98F;
 }
 
 @media (max-width: 640px) {
@@ -239,8 +248,8 @@ main {
 }
 
 .product-card .badge-new {
-  background: #fff1e8;
-  color: #c2410c;
+  background: var(--color-accent-coral-soft);
+  color: var(--color-accent-coral);
   font-weight: 600;
 }
 
