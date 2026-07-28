@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=24';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=25';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -24,6 +24,16 @@ let salesMode = false;
 
 const RECENT_UPDATE_MS = 14 * 24 * 60 * 60 * 1000; // 14 天內視為「本次更新」
 const CATEGORY_ORDER = ['軟體類', '蝦蟹類', '魚類', '螺貝類', '其他調理類'];
+
+// 分類標題旁的小圖示，純手繪 inline SVG（不依賴外部圖示網站，避免又遇到連結失效/需要標註來源的問題）
+const CATEGORY_ICONS = {
+  '軟體類': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3 0 5.5 2.3 5.5 6 0 2-.8 3.6-2 4.8"/><path d="M12 3c-3 0-5.5 2.3-5.5 6 0 2 .8 3.6 2 4.8"/><path d="M8.5 13.8c0 2 .3 4-1 6.2M11 14.3c0 2.3.2 4.3-.7 6.7M13 14.3c0 2.3-.2 4.3.7 6.7M15.5 13.8c0 2-.3 4 1 6.2"/></svg>',
+  '蝦蟹類': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17c-1.5-3 0-9 6-11 4-1.3 8 .5 9 4 .8 3-1 5.5-4 6.5"/><path d="M16 16.5c1 1 1 2.5 0 3.5M13 17.5c.6 1 .5 2.2-.3 3"/><path d="M11 6c-.8-1-2-1.6-3.2-1.6M9.5 7.3C8.7 6.5 7.6 6 6.5 6"/></svg>',
+  '魚類': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12c3-4 8-6 13-4 2 .8 3.5 2.3 4.5 4-1 1.7-2.5 3.2-4.5 4-5 2-10 0-13-4z"/><path d="M17 8l3-3M17 16l3 3"/><circle cx="7.5" cy="11" r="0.9" fill="currentColor" stroke="none"/></svg>',
+  '螺貝類': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20c-4.4 0-8-3.6-8-8s3.6-8 8-8 7 3 7 6.5-2.5 5.5-5.5 5.5S8 14 8 11.5 9.8 8 12 8"/></svg>',
+  '其他調理類': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16l-1.2 6.5a2 2 0 01-2 1.5H7.2a2 2 0 01-2-1.5L4 11z"/><path d="M2 11h20M9 5.5c0 1-.7 1-.7 2M12 5c0 1-.7 1-.7 2M15 5.5c0 1-.7 1-.7 2"/></svg>'
+};
+const DEFAULT_CATEGORY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/></svg>';
 
 // 同一系列商品（例如「軟絲 3A」「軟絲 4A」）在總覽區只顯示一個名稱，不用每個規格都列一個
 const OVERVIEW_GROUP_PREFIXES = [
@@ -329,7 +339,10 @@ function renderProducts() {
     }
   });
   productGrid.innerHTML = groups.map(g => `
-    <h2 class="category-heading">${escapeHTML(g.category)}<span class="category-count">${g.items.length} 項</span></h2>
+    <h2 class="category-heading">
+      <span class="category-icon-badge">${CATEGORY_ICONS[g.category] || DEFAULT_CATEGORY_ICON}</span>
+      ${escapeHTML(g.category)}<span class="category-count">${g.items.length} 項</span>
+    </h2>
     <div class="product-grid">${g.items.map(cardHTML).join('')}</div>
   `).join('');
 }

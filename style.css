@@ -24,7 +24,7 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+  font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
@@ -42,8 +42,11 @@ header.site-header {
 }
 
 header.site-header h1 {
-  font-size: 20px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
   margin: 0;
+  color: var(--color-primary);
 }
 
 header.site-header nav a {
@@ -95,14 +98,32 @@ main {
 
 .category-heading {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 700;
-  margin: 32px 0 14px;
-  padding-bottom: 8px;
+  letter-spacing: 0.2px;
+  margin: 36px 0 16px;
+  padding-bottom: 10px;
   border-bottom: 2px solid var(--color-accent-green);
   color: var(--color-text);
+}
+
+.category-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.category-icon-badge svg {
+  width: 19px;
+  height: 19px;
 }
 
 .category-heading:first-child {
