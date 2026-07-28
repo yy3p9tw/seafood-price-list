@@ -7,15 +7,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=26" />
+  <link rel="stylesheet" href="style.css?v=27" />
 </head>
 <body>
-  <header class="site-header">
-    <h1>產品價目表</h1>
-    <nav>
-      <a href="#" id="salesModeToggle">業務登入</a>
-      <a href="admin.html">後台管理</a>
-    </nav>
+  <header class="site-header site-header-hero">
+    <div class="site-header-row">
+      <h1>產品價目表</h1>
+      <nav>
+        <a href="#" id="salesModeToggle">業務登入</a>
+        <a href="admin.html">後台管理</a>
+      </nav>
+    </div>
+    <svg class="site-header-wave" viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0 30c240 30 480 30 720 15s480-30 720 0v15H0z"/></svg>
   </header>
 
   <main>
@@ -34,6 +37,8 @@
     <div id="emptyState" class="empty-state" style="display:none;">目前沒有符合條件的產品</div>
   </main>
 
+  <footer id="siteFooter" class="site-footer" style="display:none;"></footer>
+
   <button type="button" id="backToOverviewBtn" class="back-to-overview" style="display:none;">↑ 回到總覽</button>
 
   <div id="salesLoginModal" class="sales-login-modal">
@@ -49,6 +54,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=26"></script>
+  <script type="module" src="app.js?v=27"></script>
 </body>
 </html>

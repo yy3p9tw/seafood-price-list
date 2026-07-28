@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=26';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=27';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -16,6 +16,32 @@ const salesAccountInput = document.getElementById('salesAccountInput');
 const salesPasswordInput = document.getElementById('salesPasswordInput');
 const salesLoginError = document.getElementById('salesLoginError');
 const salesLoginCancelBtn = document.getElementById('salesLoginCancelBtn');
+const siteFooter = document.getElementById('siteFooter');
+
+// 店家聯絡資訊：目前留空，之後有資料時直接填在這裡就會顯示在頁尾（全部留空頁尾就不會顯示）
+const BUSINESS_INFO = {
+  name: '',
+  phone: '',
+  address: '',
+  hours: ''
+};
+
+function renderFooter() {
+  const rows = [
+    BUSINESS_INFO.phone ? `<span>電話：${escapeHTML(BUSINESS_INFO.phone)}</span>` : '',
+    BUSINESS_INFO.address ? `<span>地址：${escapeHTML(BUSINESS_INFO.address)}</span>` : '',
+    BUSINESS_INFO.hours ? `<span>營業時間：${escapeHTML(BUSINESS_INFO.hours)}</span>` : ''
+  ].filter(Boolean);
+  if (!BUSINESS_INFO.name && rows.length === 0) {
+    siteFooter.style.display = 'none';
+    return;
+  }
+  siteFooter.innerHTML = `
+    ${BUSINESS_INFO.name ? `<div class="footer-name">${escapeHTML(BUSINESS_INFO.name)}</div>` : ''}
+    ${rows.length ? `<div class="footer-details">${rows.join('')}</div>` : ''}
+  `;
+  siteFooter.style.display = '';
+}
 
 const SALES_MODE_KEY = 'priceList_salesCode';
 
@@ -402,6 +428,8 @@ productGrid.addEventListener('click', async e => {
 });
 
 searchInput.addEventListener('input', renderProducts);
+
+renderFooter();
 
 subscribeToSalesCodes(
   codes => {
