@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=28';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=29';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -61,9 +61,6 @@ const CATEGORY_ICONS = {
   '其他調理類': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11h16l-1.2 6.5a2 2 0 01-2 1.5H7.2a2 2 0 01-2-1.5L4 11z"/><path d="M2 11h20M9 5.5c0 1-.7 1-.7 2M12 5c0 1-.7 1-.7 2M15 5.5c0 1-.7 1-.7 2"/></svg>'
 };
 const DEFAULT_CATEGORY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/></svg>';
-
-// 熱門商品標籤用的小火焰圖示
-const HOT_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2c1 3-2 4-2 7a3 3 0 006 0c0-1 1-1 1-1 1 2 2 3.5 2 5.5A7 7 0 015 13.5c0-3 1.5-5 3-6.5-.2 1.3.3 2 1 2 .8 0 1-1.5 0-3C8.3 4.2 10 2.7 12 2z"/></svg>';
 
 // 同一系列商品（例如「軟絲 3A」「軟絲 4A」）在總覽區只顯示一個名稱，不用每個規格都列一個
 const OVERVIEW_GROUP_PREFIXES = [
@@ -266,10 +263,7 @@ function renderOverview(products) {
     }
   });
 
-  const chipCount = groups.reduce((sum, g) => sum + g.items.length, 0);
-
   productOverview.innerHTML = `
-    <div class="overview-title">全部品項（共 ${chipCount} 項，點名稱可直接跳過去）</div>
     ${groups.map(g => `
       <div class="overview-group">
         <span class="overview-cat">${escapeHTML(g.category)}</span>
@@ -323,7 +317,6 @@ function renderProducts() {
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
         ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
-        ${p.featured ? `<span class="badge badge-hot">${HOT_ICON}熱門</span>` : ''}
         ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>

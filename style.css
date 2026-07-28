@@ -390,20 +390,6 @@ main {
   font-weight: 600;
 }
 
-.product-card .badge-hot {
-  background: var(--color-accent-green-soft);
-  color: var(--color-accent-green);
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.product-card .badge-hot svg {
-  width: 11px;
-  height: 11px;
-}
-
 .product-card h3 {
   margin: 0;
   font-size: 18px;

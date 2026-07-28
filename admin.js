@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=28';
+import { auth } from './firebase-config.js?v=29';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=28';
+} from './products-service.js?v=29';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -40,7 +40,6 @@ const fieldCategory = document.getElementById('fieldCategory');
 const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldPackaging = document.getElementById('fieldPackaging');
 const fieldHiddenFromGuest = document.getElementById('fieldHiddenFromGuest');
-const fieldFeatured = document.getElementById('fieldFeatured');
 const photoUrlInput = document.getElementById('photoUrlInput');
 const addPhotoUrlBtn = document.getElementById('addPhotoUrlBtn');
 const photoPreviewGrid = document.getElementById('photoPreviewGrid');
@@ -312,7 +311,6 @@ function resetForm() {
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
   fieldHiddenFromGuest.checked = false;
-  fieldFeatured.checked = false;
   guestSpecRows.innerHTML = '';
   fieldGuestNotes.value = '';
   priceRows.innerHTML = '';
@@ -333,7 +331,6 @@ function loadProductIntoForm(product) {
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
   fieldHiddenFromGuest.checked = !!product.hiddenFromGuest;
-  fieldFeatured.checked = !!product.featured;
   guestSpecRows.innerHTML = '';
   (product.specs || []).forEach(s => addKeyValueRow(guestSpecRows, s.key, s.value, '規格名稱，例如：20/30', '規格內容，例如：尺寸/等級'));
   fieldGuestNotes.value = (product.specNotes || []).join('\n');
@@ -354,7 +351,6 @@ productForm.addEventListener('submit', async e => {
     origin: fieldOrigin.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
     hiddenFromGuest: fieldHiddenFromGuest.checked,
-    featured: fieldFeatured.checked,
     photos: currentPhotos,
     specs: getRowsFrom(guestSpecRows),
     specNotes: getNotesFrom(fieldGuestNotes),
