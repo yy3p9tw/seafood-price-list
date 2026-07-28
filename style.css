@@ -443,6 +443,18 @@ main {
   color: var(--color-text);
 }
 
+/* 規格/價格項目數量多時（超過 4 項）改兩欄排版，卡片才不會被拉得太長 */
+.spec-list-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  row-gap: 0;
+}
+
+.spec-list-grid li {
+  padding: 4px 0;
+}
+
 .spec-notes {
   background: var(--color-bg);
   border-radius: 8px;
