@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>產品價目表</title>
-  <link rel="stylesheet" href="style.css?v=22" />
+  <link rel="stylesheet" href="style.css?v=23" />
 </head>
 <body>
   <header class="site-header">
@@ -32,6 +32,20 @@
 
   <button type="button" id="backToOverviewBtn" class="back-to-overview" style="display:none;">↑ 回到總覽</button>
 
-  <script type="module" src="app.js?v=22"></script>
+  <div id="salesLoginModal" class="sales-login-modal">
+    <div class="sales-login-box">
+      <h2>業務登入</h2>
+      <p class="hint-text">帳號、密碼請輸入相同的員工編號</p>
+      <form id="salesLoginForm">
+        <input type="text" id="salesAccountInput" placeholder="帳號（員工編號）" autocomplete="username" />
+        <input type="password" id="salesPasswordInput" placeholder="密碼（員工編號）" autocomplete="current-password" />
+        <div class="error-text" id="salesLoginError"></div>
+        <button type="submit" style="width:100%;">登入</button>
+        <button type="button" id="salesLoginCancelBtn" class="secondary" style="width:100%; margin-top:8px;">取消</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=23"></script>
 </body>
 </html>

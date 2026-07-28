@@ -628,6 +628,50 @@ button.danger:hover {
   min-height: 18px;
 }
 
+.sales-login-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.sales-login-modal.open {
+  display: flex;
+}
+
+.sales-login-box {
+  max-width: 360px;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.sales-login-box h2 {
+  margin-top: 0;
+}
+
+.sales-login-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+
 .hint-text {
   color: var(--color-text-muted);
   font-size: 12px;

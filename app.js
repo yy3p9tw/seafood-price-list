@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=22';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=23';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -9,6 +9,12 @@ const searchInput = document.getElementById('searchInput');
 const categoryFilter = document.getElementById('categoryFilter');
 const dataSourceHint = document.getElementById('dataSourceHint');
 const salesModeToggle = document.getElementById('salesModeToggle');
+const salesLoginModal = document.getElementById('salesLoginModal');
+const salesLoginForm = document.getElementById('salesLoginForm');
+const salesAccountInput = document.getElementById('salesAccountInput');
+const salesPasswordInput = document.getElementById('salesPasswordInput');
+const salesLoginError = document.getElementById('salesLoginError');
+const salesLoginCancelBtn = document.getElementById('salesLoginCancelBtn');
 
 const SALES_MODE_KEY = 'priceList_salesCode';
 
@@ -85,6 +91,18 @@ function tryUnlockWithCode(code) {
   return false;
 }
 
+function openSalesLoginModal() {
+  salesAccountInput.value = '';
+  salesPasswordInput.value = '';
+  salesLoginError.textContent = '';
+  salesLoginModal.classList.add('open');
+  salesAccountInput.focus();
+}
+
+function closeSalesLoginModal() {
+  salesLoginModal.classList.remove('open');
+}
+
 salesModeToggle.addEventListener('click', e => {
   e.preventDefault();
   if (salesMode) {
@@ -96,11 +114,32 @@ salesModeToggle.addEventListener('click', e => {
     renderProducts();
     return;
   }
-  const code = prompt('請輸入業務登入碼（員工編號）：');
-  if (code === null) return;
-  if (!tryUnlockWithCode(code)) {
-    alert('登入碼不正確，請確認員工編號是否輸入正確。');
+  openSalesLoginModal();
+});
+
+salesLoginCancelBtn.addEventListener('click', () => closeSalesLoginModal());
+
+salesLoginModal.addEventListener('click', e => {
+  if (e.target === salesLoginModal) closeSalesLoginModal();
+});
+
+salesLoginForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const account = salesAccountInput.value.trim();
+  const password = salesPasswordInput.value.trim();
+  if (!account || !password) {
+    salesLoginError.textContent = '請輸入帳號與密碼';
+    return;
   }
+  if (account !== password) {
+    salesLoginError.textContent = '帳號與密碼不一致，請輸入相同的員工編號';
+    return;
+  }
+  if (!tryUnlockWithCode(account)) {
+    salesLoginError.textContent = '帳號或密碼不正確，請確認員工編號是否輸入正確';
+    return;
+  }
+  closeSalesLoginModal();
 });
 
 function formatQuoteText(product) {
