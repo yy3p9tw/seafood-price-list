@@ -1,12 +1,13 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=25';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=26';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
 const backToOverviewBtn = document.getElementById('backToOverviewBtn');
 const emptyState = document.getElementById('emptyState');
 const searchInput = document.getElementById('searchInput');
-const categoryFilter = document.getElementById('categoryFilter');
+const categoryFilterChips = document.getElementById('categoryFilterChips');
+let selectedCategory = '';
 const dataSourceHint = document.getElementById('dataSourceHint');
 const salesModeToggle = document.getElementById('salesModeToggle');
 const salesLoginModal = document.getElementById('salesLoginModal');
@@ -182,11 +183,22 @@ function getVisibleProducts() {
 
 function renderCategoryOptions() {
   const categories = getCategoriesFrom(getVisibleProducts());
-  const current = categoryFilter.value;
-  categoryFilter.innerHTML = '<option value="">全部分類</option>' +
-    categories.map(c => `<option value="${escapeHTML(c)}">${escapeHTML(c)}</option>`).join('');
-  categoryFilter.value = categories.includes(current) ? current : '';
+  if (selectedCategory && !categories.includes(selectedCategory)) {
+    selectedCategory = '';
+  }
+  const chips = [{ value: '', label: '全部分類' }, ...categories.map(c => ({ value: c, label: c }))];
+  categoryFilterChips.innerHTML = chips.map(chip => `
+    <button type="button" class="category-filter-chip${chip.value === selectedCategory ? ' active' : ''}" data-category="${escapeHTML(chip.value)}">${escapeHTML(chip.label)}</button>
+  `).join('');
 }
+
+categoryFilterChips.addEventListener('click', e => {
+  const chip = e.target.closest('.category-filter-chip');
+  if (!chip) return;
+  selectedCategory = chip.dataset.category;
+  renderCategoryOptions();
+  renderProducts();
+});
 
 function productMatchesKeyword(product, keyword) {
   if (!keyword) return true;
@@ -246,9 +258,8 @@ function renderProducts() {
   const keyword = searchInput.value.trim().toLowerCase();
   products = products.filter(p => productMatchesKeyword(p, keyword));
 
-  const category = categoryFilter.value;
-  if (category) {
-    products = products.filter(p => p.category === category);
+  if (selectedCategory) {
+    products = products.filter(p => p.category === selectedCategory);
   }
 
   // 先依分類排序（軟體類、蝦類、魚類、螺貝類…），同分類內再依名稱排序，
@@ -391,7 +402,6 @@ productGrid.addEventListener('click', async e => {
 });
 
 searchInput.addEventListener('input', renderProducts);
-categoryFilter.addEventListener('change', renderProducts);
 
 subscribeToSalesCodes(
   codes => {

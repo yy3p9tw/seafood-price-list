@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=25" />
+  <link rel="stylesheet" href="style.css?v=26" />
 </head>
 <body>
   <header class="site-header">
@@ -22,11 +22,12 @@
     <p id="dataSourceHint" class="hint-text" style="display:none;"></p>
 
     <div class="toolbar">
-      <input type="text" id="searchInput" placeholder="搜尋商品名稱、分類、規格關鍵字..." />
-      <select id="categoryFilter">
-        <option value="">全部分類</option>
-      </select>
+      <div class="search-input-wrap">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="searchInput" placeholder="搜尋商品名稱、分類、規格關鍵字..." />
+      </div>
     </div>
+    <div id="categoryFilterChips" class="category-filter-chips"></div>
 
     <div id="productOverview" class="product-overview"></div>
     <div id="productGrid"></div>
@@ -48,6 +49,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=25"></script>
+  <script type="module" src="app.js?v=26"></script>
 </body>
 </html>
