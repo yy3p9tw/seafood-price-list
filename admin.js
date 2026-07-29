@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=29';
+import { auth } from './firebase-config.js?v=31';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=29';
+} from './products-service.js?v=31';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -46,6 +46,8 @@ const photoPreviewGrid = document.getElementById('photoPreviewGrid');
 const photoUploadMsg = document.getElementById('photoUploadMsg');
 const loadImageLibraryBtn = document.getElementById('loadImageLibraryBtn');
 const imageLibraryGrid = document.getElementById('imageLibraryGrid');
+const githubPatInput = document.getElementById('githubPatInput');
+const saveGithubPatBtn = document.getElementById('saveGithubPatBtn');
 const guestSpecRows = document.getElementById('guestSpecRows');
 const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
@@ -233,10 +235,62 @@ photoUrlInput.addEventListener('keydown', e => {
   }
 });
 
-// ---------- 照片庫 (瀏覽 GitHub images 資料夾裡已經上傳的照片，點選即可加入) ----------
+// ---------- 照片庫 (瀏覽 GitHub images 資料夾裡已經上傳的照片，點選即可加入；也可以永久刪除) ----------
 
 const PAGES_BASE = 'https://yy3p9tw.github.io/seafood-price-list/';
+const GITHUB_REPO = 'yy3p9tw/seafood-price-list';
+const GITHUB_PAT_KEY = 'seafood_admin_github_pat';
 let libraryFiles = null;
+
+githubPatInput.value = localStorage.getItem(GITHUB_PAT_KEY) || '';
+
+saveGithubPatBtn.addEventListener('click', () => {
+  const pat = githubPatInput.value.trim();
+  if (pat) {
+    localStorage.setItem(GITHUB_PAT_KEY, pat);
+    alert('已儲存權杖到這台瀏覽器');
+  } else {
+    localStorage.removeItem(GITHUB_PAT_KEY);
+    alert('已清空權杖');
+  }
+});
+
+function encodeGithubPath(path) {
+  return path.split('/').map(encodeURIComponent).join('/');
+}
+
+async function deleteLibraryPhoto(path, url) {
+  const pat = localStorage.getItem(GITHUB_PAT_KEY);
+  if (!pat) {
+    alert('請先在上面貼上 GitHub 個人存取權杖並存檔，才能刪除照片');
+    return;
+  }
+  if (!confirm('確定要永久刪除這張照片嗎？這個動作無法復原。如果有商品正在使用這張照片，記得也要去該商品編輯畫面把它移除。')) return;
+  try {
+    const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
+    const getRes = await fetch(apiPath, { headers: { Authorization: 'Bearer ' + pat } });
+    if (!getRes.ok) throw new Error('讀取檔案資訊失敗 (' + getRes.status + ')');
+    const fileInfo = await getRes.json();
+    const delRes = await fetch(apiPath, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + pat, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '刪除照片：' + path, sha: fileInfo.sha, branch: 'main' })
+    });
+    if (!delRes.ok) {
+      const errBody = await delRes.json().catch(() => ({}));
+      throw new Error(errBody.message || ('刪除失敗 (' + delRes.status + ')'));
+    }
+    libraryFiles = libraryFiles.filter(f => f.path !== path);
+    const idx = currentPhotos.indexOf(url);
+    if (idx !== -1) {
+      currentPhotos.splice(idx, 1);
+      renderPhotoPreview();
+    }
+    renderImageLibrary();
+  } catch (err) {
+    alert('刪除失敗：' + err.message);
+  }
+}
 
 function renderImageLibrary() {
   if (!libraryFiles) return;
@@ -258,8 +312,9 @@ function renderImageLibrary() {
         ${files.map(f => {
           const selected = currentPhotos.includes(f.url);
           return `
-            <div class="photo-preview-item library-item${selected ? ' selected' : ''}" data-url="${escapeHTML(f.url)}">
+            <div class="photo-preview-item library-item${selected ? ' selected' : ''}" data-url="${escapeHTML(f.url)}" data-path="${escapeHTML(f.path)}">
               <img src="${escapeHTML(f.url)}" alt="" loading="lazy" />
+              <button type="button" class="photo-library-delete" data-url="${escapeHTML(f.url)}" data-path="${escapeHTML(f.path)}" title="永久刪除這張照片">🗑</button>
             </div>
           `;
         }).join('')}
@@ -274,6 +329,12 @@ function renderImageLibrary() {
       else currentPhotos.splice(idx, 1);
       renderPhotoPreview();
       renderImageLibrary();
+    });
+  });
+  imageLibraryGrid.querySelectorAll('.photo-library-delete').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      deleteLibraryPhoto(btn.dataset.path, btn.dataset.url);
     });
   });
 }
@@ -292,6 +353,7 @@ loadImageLibraryBtn.addEventListener('click', async () => {
         const parts = relative.split('/');
         return {
           folder: parts.length > 1 ? parts[0] : '',
+          path: t.path,
           url: PAGES_BASE + t.path.split('/').map(encodeURIComponent).join('/')
         };
       });

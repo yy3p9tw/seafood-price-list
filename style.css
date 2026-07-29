@@ -695,19 +695,37 @@ button.danger:hover {
   border: 1px solid var(--color-border);
 }
 
-.photo-preview-remove {
+.photo-preview-remove,
+.photo-library-delete {
   position: absolute;
-  top: -6px;
-  right: -6px;
   width: 22px;
   height: 22px;
+  padding: 0;
   border-radius: 50%;
   border: none;
   background: var(--color-danger);
   color: #fff;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
   cursor: pointer;
+  box-shadow: none;
+}
+
+.photo-preview-remove:hover,
+.photo-library-delete:hover {
+  background: var(--color-danger-hover);
+  transform: none;
+  box-shadow: none;
+}
+
+.photo-preview-remove {
+  top: -6px;
+  right: -6px;
+}
+
+.photo-library-delete {
+  bottom: -6px;
+  right: -6px;
 }
 
 .library-item {
