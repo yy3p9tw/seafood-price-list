@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=32';
+import { auth } from './firebase-config.js?v=33';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=32';
+} from './products-service.js?v=33';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -49,6 +49,13 @@ const loadImageLibraryBtn = document.getElementById('loadImageLibraryBtn');
 const imageLibraryGrid = document.getElementById('imageLibraryGrid');
 const githubPatInput = document.getElementById('githubPatInput');
 const saveGithubPatBtn = document.getElementById('saveGithubPatBtn');
+const togglePatSection = document.getElementById('togglePatSection');
+const patSection = document.getElementById('patSection');
+
+togglePatSection.addEventListener('click', e => {
+  e.preventDefault();
+  patSection.style.display = patSection.style.display === 'none' ? 'block' : 'none';
+});
 const guestSpecRows = document.getElementById('guestSpecRows');
 const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
