@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=31" />
+  <link rel="stylesheet" href="style.css?v=32" />
 </head>
 <body>
   <header class="site-header">
@@ -100,6 +100,9 @@
               <label><input type="checkbox" id="fieldHiddenFromGuest" /> 訪客看不到這個商品（整項商品僅業務可見）</label>
             </div>
             <div class="field full">
+              <label><input type="checkbox" id="fieldNewBadge" /> 顯示「本次更新」標籤（手動勾選，不會自動判斷）</label>
+            </div>
+            <div class="field full">
               <label>規格（尺寸/等級等描述性內容，沒有照片時會顯示這個）</label>
               <div id="guestSpecRows"></div>
               <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
@@ -186,6 +189,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=31"></script>
+  <script type="module" src="admin.js?v=32"></script>
 </body>
 </html>

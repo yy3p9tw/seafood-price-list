@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=30';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=32';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -49,7 +49,6 @@ let allProducts = [];
 let validSalesCodes = [];
 let salesMode = false;
 
-const RECENT_UPDATE_MS = 14 * 24 * 60 * 60 * 1000; // 14 天內視為「本次更新」
 const CATEGORY_ORDER = ['軟體類', '蝦蟹類', '魚類', '螺貝類', '其他調理類'];
 
 // 分類標題旁的小圖示，純手繪 inline SVG（不依賴外部圖示網站，避免又遇到連結失效/需要標註來源的問題）
@@ -90,10 +89,6 @@ function escapeHTML(str) {
   const div = document.createElement('div');
   div.textContent = str ?? '';
   return div.innerHTML;
-}
-
-function isRecentlyUpdated(product) {
-  return product.updatedAt && (Date.now() - product.updatedAt) < RECENT_UPDATE_MS;
 }
 
 // 照片燈箱：點縮圖放大看，點任何地方關閉
@@ -317,7 +312,7 @@ function renderProducts() {
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
         ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
-        ${isRecentlyUpdated(p) ? `<span class="badge badge-new">本次更新</span>` : ''}
+        ${p.newBadge ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>
       ${(p.origin || p.packagingSpec) ? `
