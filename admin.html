@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=43" />
+  <link rel="stylesheet" href="style.css?v=44" />
 </head>
 <body>
   <header class="site-header">
@@ -81,19 +81,28 @@
                 <p class="hint-text" id="photoUploadMsg"></p>
               </div>
               <div class="field full">
-                <label>從照片庫選擇（先把照片放進 GitHub 的 images 資料夾，再回來點選；縮圖右下角垃圾桶可永久刪除該照片）</label>
-                <p class="hint-text"><a href="#" id="togglePatSection">設定刪除照片權杖（只有要用垃圾桶刪除照片時才需要）</a></p>
-                <div id="patSection" style="display:none;">
-                  <div class="io-actions">
-                    <input type="password" id="githubPatInput" placeholder="GitHub 個人存取權杖（PAT，用來刪除照片，只存在這台瀏覽器）" style="flex:1;" />
-                    <button type="button" class="secondary" id="saveGithubPatBtn">儲存權杖</button>
-                  </div>
-                  <p class="hint-text">
-                    要刪除照片庫裡的照片才需要填這個。到 GitHub 網站右上角頭像 → Settings → Developer settings →
-                    Personal access tokens → Fine-grained tokens 建立一組，Repository 選這個 repo，Permissions 的
-                    Contents 設為 Read and write，複製貼在這裡存檔即可（只存在這台瀏覽器的 localStorage，不會上傳到任何地方）。
-                  </p>
+                <label>GitHub 權杖（上傳、刪除照片都需要，只需設定一次）</label>
+                <div class="io-actions">
+                  <input type="password" id="githubPatInput" placeholder="GitHub 個人存取權杖（只存在這台瀏覽器）" style="flex:1;" />
+                  <button type="button" class="secondary" id="saveGithubPatBtn">儲存權杖</button>
                 </div>
+                <p class="hint-text">
+                  到 GitHub 網站右上角頭像 → Settings → Developer settings → Personal access tokens →
+                  Fine-grained tokens 建立一組，Repository 選這個 repo，Permissions 的 Contents 設為
+                  Read and write，複製貼在這裡存檔即可（只存在這台瀏覽器的 localStorage，不會上傳到任何地方）。
+                </p>
+              </div>
+              <div class="field full">
+                <label>上傳新照片（拖曳檔案到下面框框，或點擊選擇檔案，會直接存進 GitHub 的 images 資料夾）</label>
+                <input type="text" id="uploadFolderInput" placeholder="要放進哪個資料夾，例如：小花枝" style="max-width:260px; margin-bottom:8px;" />
+                <div id="uploadDropZone" class="upload-drop-zone">
+                  拖曳照片到這裡，或點擊選擇檔案
+                  <input type="file" id="uploadFileInput" accept="image/*" multiple style="display:none;" />
+                </div>
+                <p class="hint-text" id="uploadMsg"></p>
+              </div>
+              <div class="field full">
+                <label>從照片庫選擇（挑之前上傳過的照片；縮圖右下角垃圾桶可永久刪除該照片）</label>
                 <button type="button" class="secondary" id="loadImageLibraryBtn">瀏覽 / 重新整理照片庫</button>
                 <div id="imageLibraryGrid" class="photo-preview-grid"></div>
               </div>
@@ -208,6 +217,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=43"></script>
+  <script type="module" src="admin.js?v=44"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=43';
+import { auth } from './firebase-config.js?v=44';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=43';
+} from './products-service.js?v=44';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -52,13 +52,10 @@ const loadImageLibraryBtn = document.getElementById('loadImageLibraryBtn');
 const imageLibraryGrid = document.getElementById('imageLibraryGrid');
 const githubPatInput = document.getElementById('githubPatInput');
 const saveGithubPatBtn = document.getElementById('saveGithubPatBtn');
-const togglePatSection = document.getElementById('togglePatSection');
-const patSection = document.getElementById('patSection');
-
-togglePatSection.addEventListener('click', e => {
-  e.preventDefault();
-  patSection.style.display = patSection.style.display === 'none' ? 'block' : 'none';
-});
+const uploadFolderInput = document.getElementById('uploadFolderInput');
+const uploadDropZone = document.getElementById('uploadDropZone');
+const uploadFileInput = document.getElementById('uploadFileInput');
+const uploadMsg = document.getElementById('uploadMsg');
 
 // 表單裡的商品照片/訪客規格/業務價格三大塊，點標題可以個別折疊，不用每次都捲過整段
 document.querySelectorAll('.form-section-toggle').forEach(header => {
@@ -349,7 +346,10 @@ async function deleteLibraryPhoto(path, url) {
   try {
     const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
     const getRes = await fetch(apiPath, { headers: { Authorization: 'Bearer ' + pat } });
-    if (!getRes.ok) throw new Error('讀取檔案資訊失敗 (' + getRes.status + ')');
+    if (!getRes.ok) {
+      const errBody = await getRes.json().catch(() => ({}));
+      throw new Error('讀取檔案資訊失敗 (' + getRes.status + ')：' + (errBody.message || '未知錯誤'));
+    }
     const fileInfo = await getRes.json();
     const delRes = await fetch(apiPath, {
       method: 'DELETE',
@@ -442,6 +442,111 @@ loadImageLibraryBtn.addEventListener('click', async () => {
     imageLibraryGrid.style.display = '';
     imageLibraryGrid.innerHTML = `<p class="hint-text" style="color:var(--color-danger);">讀取照片庫失敗：${escapeHTML(err.message)}</p>`;
   }
+});
+
+// ---------- 上傳照片 (拖曳或選檔案，直接透過 GitHub API 存進 repo，不用先手動丟進資料夾) ----------
+
+function resizeImageToDataURL(file, maxDim = 1600, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = () => reject(new Error('圖片讀取失敗'));
+      img.src = reader.result;
+    };
+    reader.onerror = () => reject(new Error('檔案讀取失敗'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function sanitizeFileBase(name) {
+  const base = name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9一-鿿-]+/g, '-').slice(0, 40);
+  return base || 'photo';
+}
+
+async function uploadFilesToGithub(files) {
+  const pat = localStorage.getItem(GITHUB_PAT_KEY);
+  if (!pat) {
+    uploadMsg.style.color = 'var(--color-danger)';
+    uploadMsg.textContent = '請先在上面貼上 GitHub 個人存取權杖並存檔，才能上傳照片';
+    return;
+  }
+  const folder = uploadFolderInput.value.trim();
+  if (!folder) {
+    uploadMsg.style.color = 'var(--color-danger)';
+    uploadMsg.textContent = '請先填要放進哪個資料夾';
+    return;
+  }
+  let uploadedCount = 0;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    uploadMsg.style.color = 'var(--color-text-muted)';
+    uploadMsg.textContent = `上傳中...（${i + 1}/${files.length}）`;
+    try {
+      const dataUrl = await resizeImageToDataURL(file);
+      const base64 = dataUrl.split(',')[1];
+      const filename = sanitizeFileBase(file.name) + '-' + Date.now() + '-' + i + '.jpg';
+      const path = 'images/' + folder + '/' + filename;
+      const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
+      const res = await fetch(apiPath, {
+        method: 'PUT',
+        headers: { Authorization: 'Bearer ' + pat, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: '上傳照片：' + path, content: base64, branch: 'main' })
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || ('上傳失敗 (' + res.status + ')'));
+      }
+      const url = PAGES_BASE + path.split('/').map(encodeURIComponent).join('/');
+      currentPhotos.push(url);
+      if (libraryFiles) libraryFiles.push({ folder, path, url });
+      uploadedCount++;
+    } catch (err) {
+      uploadMsg.style.color = 'var(--color-danger)';
+      uploadMsg.textContent = `上傳失敗（${file.name}）：${err.message}`;
+      renderPhotoPreview();
+      renderImageLibrary();
+      return;
+    }
+  }
+  renderPhotoPreview();
+  renderImageLibrary();
+  uploadMsg.style.color = 'var(--color-success)';
+  uploadMsg.textContent = `已上傳 ${uploadedCount} 張照片，並自動加入這個商品的已選擇照片`;
+}
+
+uploadDropZone.addEventListener('click', () => uploadFileInput.click());
+
+uploadDropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadDropZone.classList.add('dragover');
+});
+
+uploadDropZone.addEventListener('dragleave', () => {
+  uploadDropZone.classList.remove('dragover');
+});
+
+uploadDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadDropZone.classList.remove('dragover');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  if (files.length) uploadFilesToGithub(files);
+});
+
+uploadFileInput.addEventListener('change', () => {
+  const files = Array.from(uploadFileInput.files);
+  if (files.length) uploadFilesToGithub(files);
+  uploadFileInput.value = '';
 });
 
 // ---------- 表單 (預設收起來，點「新增產品」或表格裡的「編輯」才展開) ----------
