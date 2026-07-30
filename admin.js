@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=37';
+import { auth } from './firebase-config.js?v=38';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=37';
+} from './products-service.js?v=38';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -88,6 +88,7 @@ const originList = document.getElementById('originList');
 const packagingList = document.getElementById('packagingList');
 const productTableBody = document.getElementById('productTableBody');
 const clearAllBtn = document.getElementById('clearAllBtn');
+const productSearchInput = document.getElementById('productSearchInput');
 
 const exportBtn = document.getElementById('exportBtn');
 const importBtn = document.getElementById('importBtn');
@@ -104,6 +105,54 @@ let currentProducts = [];
 let unsubscribeProducts = null;
 let currentSalesCodes = [];
 let unsubscribeSalesCodes = null;
+
+// 跟前台同一套分類順序，讓列表排序跟前台一致，上/下移才有意義
+const CATEGORY_ORDER = ['軟體類', '蝦蟹類', '魚類', '螺貝類', '其他調理類'];
+
+function categoryRank(category) {
+  const idx = CATEGORY_ORDER.indexOf(category);
+  return idx === -1 ? CATEGORY_ORDER.length : idx;
+}
+
+function sortedProducts() {
+  return [...currentProducts].sort((a, b) => {
+    const catDiff = categoryRank(a.category) - categoryRank(b.category);
+    if (catDiff !== 0) return catDiff;
+    const orderDiff = (a.sortOrder || 0) - (b.sortOrder || 0);
+    if (orderDiff !== 0) return orderDiff;
+    return a.name.localeCompare(b.name, 'zh-Hant');
+  });
+}
+
+function nextSortOrderFor(category) {
+  const inCategory = currentProducts.filter(p => p.category === category);
+  if (!inCategory.length) return 10;
+  return Math.max(...inCategory.map(p => p.sortOrder || 0)) + 10;
+}
+
+async function moveProduct(id, direction) {
+  const list = sortedProducts();
+  const idx = list.findIndex(p => p.id === id);
+  const swapIdx = idx + direction;
+  if (idx === -1 || swapIdx < 0 || swapIdx >= list.length) return;
+  const a = list[idx];
+  const b = list[swapIdx];
+  if (a.category !== b.category) return;
+  let aOrder = a.sortOrder || 0;
+  let bOrder = b.sortOrder || 0;
+  if (aOrder === bOrder) {
+    // 兩者順序值相同時交換無效，先錯開一點
+    bOrder = direction > 0 ? aOrder + 1 : aOrder - 1;
+  }
+  const { id: aId, ...aData } = a;
+  const { id: bId, ...bData } = b;
+  try {
+    await updateProduct(aId, { ...aData, sortOrder: bOrder });
+    await updateProduct(bId, { ...bData, sortOrder: aOrder });
+  } catch (err) {
+    alert('調整順序失敗：' + err.message);
+  }
+}
 
 // ---------- 登入 ----------
 
@@ -456,13 +505,17 @@ function loadProductIntoForm(product) {
 
 productForm.addEventListener('submit', async e => {
   e.preventDefault();
+  const category = fieldCategory.value.trim();
+  const existingProduct = editingId ? currentProducts.find(p => p.id === editingId) : null;
   const data = {
     name: fieldName.value.trim(),
-    category: fieldCategory.value.trim(),
+    category,
     origin: fieldOrigin.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
     hiddenFromGuest: fieldHiddenFromGuest.checked,
     newBadge: fieldNewBadge.checked,
+    // 編輯時沿用原本的排序值；新增產品預設排在該分類最後面，之後可以用上/下移調整
+    sortOrder: existingProduct ? (existingProduct.sortOrder || 0) : nextSortOrderFor(category),
     photos: currentPhotos,
     specs: getRowsFrom(guestSpecRows),
     specNotes: getNotesFrom(fieldGuestNotes),
@@ -496,7 +549,24 @@ function renderTable() {
     productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
-  productTableBody.innerHTML = currentProducts.map(p => {
+
+  const keyword = productSearchInput.value.trim().toLowerCase();
+  const sorted = sortedProducts();
+  const list = keyword
+    ? sorted.filter(p => (p.name || '').toLowerCase().includes(keyword) || (p.category || '').toLowerCase().includes(keyword))
+    : sorted;
+
+  if (list.length === 0) {
+    productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
+    return;
+  }
+
+  productTableBody.innerHTML = list.map((p, i) => {
+    const prev = list[i - 1];
+    const next = list[i + 1];
+    // 篩選時上/下移可能會跳過其他同分類的產品，關掉篩選再排序比較不會亂
+    const canMoveUp = !keyword && prev && prev.category === p.category;
+    const canMoveDown = !keyword && next && next.category === p.category;
     return `
     <tr>
       <td>${escapeHTML(p.name)}</td>
@@ -507,6 +577,8 @@ function renderTable() {
       <td>${(p.prices || []).length ? `${p.prices.length} 項` : '-'}</td>
       <td>
         <div class="row-actions">
+          <button type="button" class="secondary move-up-btn" data-id="${p.id}" title="上移" ${canMoveUp ? '' : 'disabled'}>▲</button>
+          <button type="button" class="secondary move-down-btn" data-id="${p.id}" title="下移" ${canMoveDown ? '' : 'disabled'}>▼</button>
           <button class="secondary edit-btn" data-id="${p.id}">編輯</button>
           <button class="danger delete-btn" data-id="${p.id}">刪除</button>
         </div>
@@ -514,6 +586,14 @@ function renderTable() {
     </tr>
   `;
   }).join('');
+
+  productTableBody.querySelectorAll('.move-up-btn').forEach(btn => {
+    btn.addEventListener('click', () => moveProduct(btn.dataset.id, -1));
+  });
+
+  productTableBody.querySelectorAll('.move-down-btn').forEach(btn => {
+    btn.addEventListener('click', () => moveProduct(btn.dataset.id, 1));
+  });
 
   productTableBody.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -536,6 +616,8 @@ function renderTable() {
     });
   });
 }
+
+productSearchInput.addEventListener('input', renderTable);
 
 function renderDatalists() {
   const categories = Array.from(new Set(currentProducts.map(p => p.category).filter(Boolean))).sort();

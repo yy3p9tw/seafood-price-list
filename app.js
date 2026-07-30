@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=37';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=38';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -83,16 +83,6 @@ function getOverviewName(name) {
 function categoryRank(category) {
   const idx = CATEGORY_ORDER.indexOf(category);
   return idx === -1 ? CATEGORY_ORDER.length : idx;
-}
-
-// 少數品項的中文排序跟預期不同，手動指定這幾個名稱之間的順序
-const MANUAL_NAME_ORDER = { '紅條': 0, '燕條': 1, '紅條肉': 2 };
-
-function compareProductNames(a, b) {
-  const rankA = MANUAL_NAME_ORDER[a];
-  const rankB = MANUAL_NAME_ORDER[b];
-  if (rankA !== undefined && rankB !== undefined) return rankA - rankB;
-  return a.localeCompare(b, 'zh-Hant');
 }
 
 function escapeHTML(str) {
@@ -290,12 +280,14 @@ function renderProducts() {
     products = products.filter(p => p.category === selectedCategory);
   }
 
-  // 先依分類排序（軟體類、蝦類、魚類、螺貝類…），同分類內再依名稱排序，
-  // 讓同系列商品（例如「軟絲 3A」「軟絲 4A」）自然排在一起
+  // 先依分類排序（軟體類、蝦類、魚類、螺貝類…），同分類內再依後台設定的順序排序
+  // （後台可以用上/下移調整，不用再靠中文排序猜順序）
   products = [...products].sort((a, b) => {
     const catDiff = categoryRank(a.category) - categoryRank(b.category);
     if (catDiff !== 0) return catDiff;
-    return compareProductNames(a.name, b.name);
+    const orderDiff = (a.sortOrder || 0) - (b.sortOrder || 0);
+    if (orderDiff !== 0) return orderDiff;
+    return a.name.localeCompare(b.name, 'zh-Hant');
   });
 
   if (products.length === 0) {
