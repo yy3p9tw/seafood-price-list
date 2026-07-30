@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=36';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=37';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -83,6 +83,16 @@ function getOverviewName(name) {
 function categoryRank(category) {
   const idx = CATEGORY_ORDER.indexOf(category);
   return idx === -1 ? CATEGORY_ORDER.length : idx;
+}
+
+// 少數品項的中文排序跟預期不同，手動指定這幾個名稱之間的順序
+const MANUAL_NAME_ORDER = { '紅條': 0, '燕條': 1, '紅條肉': 2 };
+
+function compareProductNames(a, b) {
+  const rankA = MANUAL_NAME_ORDER[a];
+  const rankB = MANUAL_NAME_ORDER[b];
+  if (rankA !== undefined && rankB !== undefined) return rankA - rankB;
+  return a.localeCompare(b, 'zh-Hant');
 }
 
 function escapeHTML(str) {
@@ -285,7 +295,7 @@ function renderProducts() {
   products = [...products].sort((a, b) => {
     const catDiff = categoryRank(a.category) - categoryRank(b.category);
     if (catDiff !== 0) return catDiff;
-    return a.name.localeCompare(b.name, 'zh-Hant');
+    return compareProductNames(a.name, b.name);
   });
 
   if (products.length === 0) {
