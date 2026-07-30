@@ -403,8 +403,8 @@ main {
 
 .meta-info {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
+  flex-direction: column;
+  gap: 4px;
   font-size: 13px;
   color: var(--color-text-muted);
 }
