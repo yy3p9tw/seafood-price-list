@@ -429,18 +429,24 @@ main {
 .spec-list li {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
   border-bottom: 1px dashed var(--color-border);
   padding: 4px 0;
 }
 
 .spec-list li span:first-child {
   color: var(--color-text-muted);
+  flex-shrink: 0;
 }
 
 .spec-list li span:last-child {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   color: var(--color-text);
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 /* 規格/價格項目數量多時（超過 4 項）改兩欄排版，卡片才不會被拉得太長 */
@@ -453,6 +459,7 @@ main {
 
 .spec-list-grid li {
   padding: 4px 0;
+  min-width: 0;
 }
 
 .spec-notes {
