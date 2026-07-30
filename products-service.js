@@ -1,7 +1,7 @@
 // 商品資料存取層：改成直接讀寫 Firestore 雲端資料庫，取代原本的 localStorage/JSON 檔案方案。
 // 前台用 subscribeToProducts 訂閱即時更新（後台一存檔，前台不用重新整理就會自動更新畫面）。
 
-import { db } from './firebase-config.js?v=38';
+import { db } from './firebase-config.js?v=39';
 import {
   collection,
   onSnapshot,
@@ -22,6 +22,8 @@ function normalize(data) {
     name: data.name || '',
     category: data.category || '',
     origin: data.origin || '',
+    manufacturer: data.manufacturer || '',
+    hideOrigin: !!data.hideOrigin,
     packagingSpec: data.packagingSpec || '',
     specs: Array.isArray(data.specs) ? data.specs : [],
     specNotes: Array.isArray(data.specNotes) ? data.specNotes : [],

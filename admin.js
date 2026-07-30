@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=38';
+import { auth } from './firebase-config.js?v=39';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=38';
+} from './products-service.js?v=39';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -39,6 +39,8 @@ const formMsg = document.getElementById('formMsg');
 const fieldName = document.getElementById('fieldName');
 const fieldCategory = document.getElementById('fieldCategory');
 const fieldOrigin = document.getElementById('fieldOrigin');
+const fieldHideOrigin = document.getElementById('fieldHideOrigin');
+const fieldManufacturer = document.getElementById('fieldManufacturer');
 const fieldPackaging = document.getElementById('fieldPackaging');
 const fieldHiddenFromGuest = document.getElementById('fieldHiddenFromGuest');
 const fieldNewBadge = document.getElementById('fieldNewBadge');
@@ -85,6 +87,7 @@ const addPriceBtn = document.getElementById('addPriceBtn');
 const fieldPriceNotes = document.getElementById('fieldPriceNotes');
 const categoryList = document.getElementById('categoryList');
 const originList = document.getElementById('originList');
+const manufacturerList = document.getElementById('manufacturerList');
 const packagingList = document.getElementById('packagingList');
 const productTableBody = document.getElementById('productTableBody');
 const clearAllBtn = document.getElementById('clearAllBtn');
@@ -462,6 +465,7 @@ function resetForm() {
   photoUploadMsg.textContent = '';
   fieldHiddenFromGuest.checked = false;
   fieldNewBadge.checked = false;
+  fieldHideOrigin.checked = false;
   guestSpecRows.innerHTML = '';
   fieldGuestNotes.value = '';
   priceRows.innerHTML = '';
@@ -484,6 +488,8 @@ function loadProductIntoForm(product) {
   fieldName.value = product.name;
   fieldCategory.value = product.category;
   fieldOrigin.value = product.origin || '';
+  fieldHideOrigin.checked = !!product.hideOrigin;
+  fieldManufacturer.value = product.manufacturer || '';
   fieldPackaging.value = product.packagingSpec || '';
   currentPhotos = [...(product.photos || [])];
   renderPhotoPreview();
@@ -511,6 +517,8 @@ productForm.addEventListener('submit', async e => {
     name: fieldName.value.trim(),
     category,
     origin: fieldOrigin.value.trim(),
+    hideOrigin: fieldHideOrigin.checked,
+    manufacturer: fieldManufacturer.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
     hiddenFromGuest: fieldHiddenFromGuest.checked,
     newBadge: fieldNewBadge.checked,
@@ -622,9 +630,11 @@ productSearchInput.addEventListener('input', renderTable);
 function renderDatalists() {
   const categories = Array.from(new Set(currentProducts.map(p => p.category).filter(Boolean))).sort();
   const origins = Array.from(new Set(currentProducts.map(p => p.origin).filter(Boolean))).sort();
+  const manufacturers = Array.from(new Set(currentProducts.map(p => p.manufacturer).filter(Boolean))).sort();
   const packagingSpecs = Array.from(new Set(currentProducts.map(p => p.packagingSpec).filter(Boolean))).sort();
   categoryList.innerHTML = categories.map(c => `<option value="${escapeHTML(c)}"></option>`).join('');
   originList.innerHTML = origins.map(o => `<option value="${escapeHTML(o)}"></option>`).join('');
+  manufacturerList.innerHTML = manufacturers.map(m => `<option value="${escapeHTML(m)}"></option>`).join('');
   packagingList.innerHTML = packagingSpecs.map(p => `<option value="${escapeHTML(p)}"></option>`).join('');
 }
 
