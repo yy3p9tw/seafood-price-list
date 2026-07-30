@@ -599,9 +599,9 @@ button.danger:hover {
 
 .admin-table th, .admin-table td {
   text-align: left;
-  padding: 12px 14px;
+  padding: 7px 10px;
   border-bottom: 1px solid var(--color-border);
-  font-size: 14px;
+  font-size: 13px;
   vertical-align: top;
 }
 
@@ -615,14 +615,23 @@ button.danger:hover {
   border-bottom: none;
 }
 
+.admin-table-category-row td {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
 .row-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .row-actions button {
-  padding: 6px 12px;
-  font-size: 13px;
+  padding: 4px 9px;
+  font-size: 12px;
 }
 
 .panel {
@@ -969,8 +978,8 @@ code {
   }
 
   .admin-table th, .admin-table td {
-    padding: 10px;
-    font-size: 13px;
+    padding: 6px 8px;
+    font-size: 12px;
   }
 
   .row-actions {

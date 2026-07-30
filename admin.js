@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=40';
+import { auth } from './firebase-config.js?v=41';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=40';
+} from './products-service.js?v=41';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -554,7 +554,7 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
 
@@ -565,7 +565,7 @@ function renderTable() {
     : sorted;
 
   if (list.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
     return;
   }
 
@@ -575,11 +575,14 @@ function renderTable() {
     // 篩選時上/下移可能會跳過其他同分類的產品，關掉篩選再排序比較不會亂
     const canMoveUp = !keyword && prev && prev.category === p.category;
     const canMoveDown = !keyword && next && next.category === p.category;
-    return `
+    const showCategoryHeader = !prev || prev.category !== p.category;
+    const categoryHeaderRow = showCategoryHeader
+      ? `<tr class="admin-table-category-row"><td colspan="6">${escapeHTML(p.category || '未分類')}</td></tr>`
+      : '';
+    return categoryHeaderRow + `
     <tr>
       <td>${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
-      <td>${escapeHTML(p.category) || '-'}</td>
       <td>${p.hiddenFromGuest ? '<span style="color:var(--color-danger); font-weight:600;">僅業務</span>' : '是'}</td>
       <td>${(p.specs || []).length ? `${p.specs.length} 項` : '-'}</td>
       <td>${(p.prices || []).length ? `${p.prices.length} 項` : '-'}</td>
