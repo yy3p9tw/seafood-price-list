@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=33" />
+  <link rel="stylesheet" href="style.css?v=34" />
 </head>
 <body>
   <header class="site-header">
@@ -39,9 +39,12 @@
       <div class="panel">
         <div class="section-title-row">
           <h2 id="formTitle">新增產品</h2>
-          <button class="secondary" id="cancelEditBtn" style="display:none;">取消編輯</button>
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="addProductBtn">+ 新增產品</button>
+            <button class="secondary" id="cancelEditBtn" style="display:none;">取消編輯</button>
+          </div>
         </div>
-        <form id="productForm">
+        <form id="productForm" style="display:none;">
           <div class="form-grid">
             <div class="field">
               <label>產品名稱 *</label>
@@ -192,6 +195,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=33"></script>
+  <script type="module" src="admin.js?v=34"></script>
 </body>
 </html>

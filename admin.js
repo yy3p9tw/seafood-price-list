@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=33';
+import { auth } from './firebase-config.js?v=34';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=33';
+} from './products-service.js?v=34';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -34,6 +34,7 @@ const productForm = document.getElementById('productForm');
 const formTitle = document.getElementById('formTitle');
 const submitBtn = document.getElementById('submitBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
+const addProductBtn = document.getElementById('addProductBtn');
 const formMsg = document.getElementById('formMsg');
 const fieldName = document.getElementById('fieldName');
 const fieldCategory = document.getElementById('fieldCategory');
@@ -372,7 +373,17 @@ loadImageLibraryBtn.addEventListener('click', async () => {
   }
 });
 
-// ---------- 表單 ----------
+// ---------- 表單 (預設收起來，點「新增產品」或表格裡的「編輯」才展開) ----------
+
+function showForm() {
+  productForm.style.display = '';
+  addProductBtn.style.display = 'none';
+}
+
+function hideForm() {
+  productForm.style.display = 'none';
+  addProductBtn.style.display = '';
+}
 
 function resetForm() {
   editingId = null;
@@ -390,7 +401,14 @@ function resetForm() {
   submitBtn.textContent = '新增產品';
   cancelEditBtn.style.display = 'none';
   formMsg.textContent = '';
+  hideForm();
 }
+
+addProductBtn.addEventListener('click', () => {
+  resetForm();
+  showForm();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
 
 function loadProductIntoForm(product) {
   editingId = product.id;
@@ -412,6 +430,7 @@ function loadProductIntoForm(product) {
   formTitle.textContent = '編輯產品：' + product.name;
   submitBtn.textContent = '儲存變更';
   cancelEditBtn.style.display = 'inline-block';
+  showForm();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
