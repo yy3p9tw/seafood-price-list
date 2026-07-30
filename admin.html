@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=34" />
+  <link rel="stylesheet" href="style.css?v=35" />
 </head>
 <body>
   <header class="site-header">
@@ -68,67 +68,73 @@
           </div>
 
           <div class="form-section guest-section">
-            <h3>商品照片（訪客卡片會用照片取代規格文字，沒有照片才會顯示規格文字）</h3>
-            <div class="field full">
-              <label>已選擇的照片</label>
-              <div id="photoPreviewGrid" class="photo-preview-grid"></div>
-              <p class="hint-text" id="photoUploadMsg"></p>
-            </div>
-            <div class="field full">
-              <label>從照片庫選擇（先把照片放進 GitHub 的 images 資料夾，再回來點選；縮圖右下角垃圾桶可永久刪除該照片）</label>
-              <p class="hint-text"><a href="#" id="togglePatSection">設定刪除照片權杖（只有要用垃圾桶刪除照片時才需要）</a></p>
-              <div id="patSection" style="display:none;">
-                <div class="io-actions">
-                  <input type="password" id="githubPatInput" placeholder="GitHub 個人存取權杖（PAT，用來刪除照片，只存在這台瀏覽器）" style="flex:1;" />
-                  <button type="button" class="secondary" id="saveGithubPatBtn">儲存權杖</button>
-                </div>
-                <p class="hint-text">
-                  要刪除照片庫裡的照片才需要填這個。到 GitHub 網站右上角頭像 → Settings → Developer settings →
-                  Personal access tokens → Fine-grained tokens 建立一組，Repository 選這個 repo，Permissions 的
-                  Contents 設為 Read and write，複製貼在這裡存檔即可（只存在這台瀏覽器的 localStorage，不會上傳到任何地方）。
-                </p>
+            <h3 class="form-section-toggle">商品照片（訪客卡片會用照片取代規格文字，沒有照片才會顯示規格文字）<span class="toggle-arrow">▾</span></h3>
+            <div class="form-section-body">
+              <div class="field full">
+                <label>已選擇的照片</label>
+                <div id="photoPreviewGrid" class="photo-preview-grid"></div>
+                <p class="hint-text" id="photoUploadMsg"></p>
               </div>
-              <button type="button" class="secondary" id="loadImageLibraryBtn">瀏覽 / 重新整理照片庫</button>
-              <div id="imageLibraryGrid" class="photo-preview-grid"></div>
-            </div>
-            <div class="field full">
-              <label>或直接貼照片網址</label>
-              <div class="io-actions">
-                <input type="text" id="photoUrlInput" placeholder="貼上照片網址..." style="flex:1;" />
-                <button type="button" class="secondary" id="addPhotoUrlBtn">+ 新增照片</button>
+              <div class="field full">
+                <label>從照片庫選擇（先把照片放進 GitHub 的 images 資料夾，再回來點選；縮圖右下角垃圾桶可永久刪除該照片）</label>
+                <p class="hint-text"><a href="#" id="togglePatSection">設定刪除照片權杖（只有要用垃圾桶刪除照片時才需要）</a></p>
+                <div id="patSection" style="display:none;">
+                  <div class="io-actions">
+                    <input type="password" id="githubPatInput" placeholder="GitHub 個人存取權杖（PAT，用來刪除照片，只存在這台瀏覽器）" style="flex:1;" />
+                    <button type="button" class="secondary" id="saveGithubPatBtn">儲存權杖</button>
+                  </div>
+                  <p class="hint-text">
+                    要刪除照片庫裡的照片才需要填這個。到 GitHub 網站右上角頭像 → Settings → Developer settings →
+                    Personal access tokens → Fine-grained tokens 建立一組，Repository 選這個 repo，Permissions 的
+                    Contents 設為 Read and write，複製貼在這裡存檔即可（只存在這台瀏覽器的 localStorage，不會上傳到任何地方）。
+                  </p>
+                </div>
+                <button type="button" class="secondary" id="loadImageLibraryBtn">瀏覽 / 重新整理照片庫</button>
+                <div id="imageLibraryGrid" class="photo-preview-grid"></div>
+              </div>
+              <div class="field full">
+                <label>或直接貼照片網址</label>
+                <div class="io-actions">
+                  <input type="text" id="photoUrlInput" placeholder="貼上照片網址..." style="flex:1;" />
+                  <button type="button" class="secondary" id="addPhotoUrlBtn">+ 新增照片</button>
+                </div>
               </div>
             </div>
           </div>
 
           <div class="form-section guest-section">
-            <h3>訪客規格（任何人都看得到，絕對不要填價格）</h3>
-            <div class="field full">
-              <label><input type="checkbox" id="fieldHiddenFromGuest" /> 訪客看不到這個商品（整項商品僅業務可見）</label>
-            </div>
-            <div class="field full">
-              <label><input type="checkbox" id="fieldNewBadge" /> 顯示「本次更新」標籤（手動勾選，不會自動判斷）</label>
-            </div>
-            <div class="field full">
-              <label>規格（尺寸/等級等描述性內容，沒有照片時會顯示這個）</label>
-              <div id="guestSpecRows"></div>
-              <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
-            </div>
-            <div class="field full">
-              <label>訪客備註（選填，一行一則）</label>
-              <textarea id="fieldGuestNotes" rows="3" placeholder="例如：解凍即食&#10;每日現貨依實際到貨為主"></textarea>
+            <h3 class="form-section-toggle">訪客規格（任何人都看得到，絕對不要填價格）<span class="toggle-arrow">▾</span></h3>
+            <div class="form-section-body">
+              <div class="field full">
+                <label><input type="checkbox" id="fieldHiddenFromGuest" /> 訪客看不到這個商品（整項商品僅業務可見）</label>
+              </div>
+              <div class="field full">
+                <label><input type="checkbox" id="fieldNewBadge" /> 顯示「本次更新」標籤（手動勾選，不會自動判斷）</label>
+              </div>
+              <div class="field full">
+                <label>規格（尺寸/等級等描述性內容，沒有照片時會顯示這個）</label>
+                <div id="guestSpecRows"></div>
+                <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
+              </div>
+              <div class="field full">
+                <label>訪客備註（選填，一行一則）</label>
+                <textarea id="fieldGuestNotes" rows="3" placeholder="例如：解凍即食&#10;每日現貨依實際到貨為主"></textarea>
+              </div>
             </div>
           </div>
 
           <div class="form-section business-section">
-            <h3>業務價格（只有業務登入後才看得到）</h3>
-            <div class="field full">
-              <label>價格（沒有價格的規格就不用新增這一列）</label>
-              <div id="priceRows"></div>
-              <button type="button" class="secondary" id="addPriceBtn">+ 新增價格欄位</button>
-            </div>
-            <div class="field full">
-              <label>業務備註（選填，一行一則，例如折扣、數量門檻）</label>
-              <textarea id="fieldPriceNotes" rows="3" placeholder="例如：20件以上降$5&#10;有量另可議價"></textarea>
+            <h3 class="form-section-toggle">業務價格（只有業務登入後才看得到）<span class="toggle-arrow">▾</span></h3>
+            <div class="form-section-body">
+              <div class="field full">
+                <label>價格（沒有價格的規格就不用新增這一列）</label>
+                <div id="priceRows"></div>
+                <button type="button" class="secondary" id="addPriceBtn">+ 新增價格欄位</button>
+              </div>
+              <div class="field full">
+                <label>業務備註（選填，一行一則，例如折扣、數量門檻）</label>
+                <textarea id="fieldPriceNotes" rows="3" placeholder="例如：20件以上降$5&#10;有量另可議價"></textarea>
+              </div>
             </div>
           </div>
           <div class="form-actions">
@@ -149,14 +155,10 @@
               <tr>
                 <th>名稱</th>
                 <th>照片</th>
-                <th>訪客可見</th>
                 <th>分類</th>
-                <th>產地</th>
-                <th>包裝規格</th>
+                <th>訪客可見</th>
                 <th>訪客規格</th>
-                <th>訪客備註</th>
                 <th>業務價格</th>
-                <th>業務備註</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -165,36 +167,42 @@
         </div>
       </div>
 
-      <div class="panel">
-        <h2>業務登入碼管理</h2>
-        <p class="hint-text">
-          前台首頁預設是「訪客模式」，看不到價格。業務同事在前台點「業務登入」，帳號、密碼都輸入這裡設定的員工編號，
-          這台裝置之後就會一直顯示價格，不用每次都登入。
-        </p>
-        <div class="io-actions">
-          <input type="text" id="newSalesCode" placeholder="輸入員工編號，例如 0094" style="max-width:220px;" />
-          <button class="secondary" id="addSalesCodeBtn">新增登入碼</button>
-        </div>
-        <div id="salesCodeList" style="margin-top:14px;"></div>
+      <div class="section-title-row">
+        <button type="button" id="toggleAdvancedBtn" class="secondary">進階設定（業務登入碼、備份與還原） ▾</button>
       </div>
 
-      <div class="panel">
-        <h2>備份與還原</h2>
-        <p class="hint-text">
-          資料平常都自動存在雲端，不用手動備份。「備份」可以把目前的產品存成一個檔案留底；
-          「還原」可以把之前存的檔案讀回來，注意會覆蓋掉目前的產品資料。
-        </p>
-        <div class="io-actions">
-          <button class="secondary" id="exportBtn">備份</button>
-          <button class="secondary" id="importBtn">還原</button>
-          <input type="file" id="importFile" accept="application/json" style="display:none;" />
+      <div id="advancedSettings" style="display:none;">
+        <div class="panel">
+          <h2>業務登入碼管理</h2>
+          <p class="hint-text">
+            前台首頁預設是「訪客模式」，看不到價格。業務同事在前台點「業務登入」，帳號、密碼都輸入這裡設定的員工編號，
+            這台裝置之後就會一直顯示價格，不用每次都登入。
+          </p>
+          <div class="io-actions">
+            <input type="text" id="newSalesCode" placeholder="輸入員工編號，例如 0094" style="max-width:220px;" />
+            <button class="secondary" id="addSalesCodeBtn">新增登入碼</button>
+          </div>
+          <div id="salesCodeList" style="margin-top:14px;"></div>
         </div>
-        <p class="hint-text" id="ioMsg"></p>
+
+        <div class="panel">
+          <h2>備份與還原</h2>
+          <p class="hint-text">
+            資料平常都自動存在雲端，不用手動備份。「備份」可以把目前的產品存成一個檔案留底；
+            「還原」可以把之前存的檔案讀回來，注意會覆蓋掉目前的產品資料。
+          </p>
+          <div class="io-actions">
+            <button class="secondary" id="exportBtn">備份</button>
+            <button class="secondary" id="importBtn">還原</button>
+            <input type="file" id="importFile" accept="application/json" style="display:none;" />
+          </div>
+          <p class="hint-text" id="ioMsg"></p>
+        </div>
       </div>
 
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=34"></script>
+  <script type="module" src="admin.js?v=35"></script>
 </body>
 </html>

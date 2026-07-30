@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=34';
+import { auth } from './firebase-config.js?v=35';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=34';
+} from './products-service.js?v=35';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -56,6 +56,26 @@ const patSection = document.getElementById('patSection');
 togglePatSection.addEventListener('click', e => {
   e.preventDefault();
   patSection.style.display = patSection.style.display === 'none' ? 'block' : 'none';
+});
+
+// 表單裡的商品照片/訪客規格/業務價格三大塊，點標題可以個別折疊，不用每次都捲過整段
+document.querySelectorAll('.form-section-toggle').forEach(header => {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.toggle-arrow');
+  header.addEventListener('click', () => {
+    const collapsed = body.style.display === 'none';
+    body.style.display = collapsed ? '' : 'none';
+    arrow.textContent = collapsed ? '▾' : '▸';
+  });
+});
+
+// 進階設定（業務登入碼管理、備份與還原）平常用不到，預設收起來
+const toggleAdvancedBtn = document.getElementById('toggleAdvancedBtn');
+const advancedSettings = document.getElementById('advancedSettings');
+toggleAdvancedBtn.addEventListener('click', () => {
+  const collapsed = advancedSettings.style.display === 'none';
+  advancedSettings.style.display = collapsed ? '' : 'none';
+  toggleAdvancedBtn.textContent = collapsed ? '進階設定（業務登入碼、備份與還原） ▴' : '進階設定（業務登入碼、備份與還原） ▾';
 });
 const guestSpecRows = document.getElementById('guestSpecRows');
 const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
@@ -473,7 +493,7 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="11" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
   productTableBody.innerHTML = currentProducts.map(p => {
@@ -481,14 +501,10 @@ function renderTable() {
     <tr>
       <td>${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
-      <td>${p.hiddenFromGuest ? '<span style="color:var(--color-danger); font-weight:600;">僅業務</span>' : '是'}</td>
       <td>${escapeHTML(p.category) || '-'}</td>
-      <td>${escapeHTML(p.origin) || '-'}</td>
-      <td>${escapeHTML(p.packagingSpec) || '-'}</td>
-      <td>${(p.specs || []).map(s => `${escapeHTML(s.key)}: ${escapeHTML(s.value)}`).join('<br/>') || '-'}</td>
-      <td>${(p.specNotes || []).map(escapeHTML).join('<br/>') || '-'}</td>
-      <td>${(p.prices || []).map(s => `${escapeHTML(s.key)}: ${escapeHTML(s.value)}`).join('<br/>') || '-'}</td>
-      <td>${(p.priceNotes || []).map(escapeHTML).join('<br/>') || '-'}</td>
+      <td>${p.hiddenFromGuest ? '<span style="color:var(--color-danger); font-weight:600;">僅業務</span>' : '是'}</td>
+      <td>${(p.specs || []).length ? `${p.specs.length} 項` : '-'}</td>
+      <td>${(p.prices || []).length ? `${p.prices.length} 項` : '-'}</td>
       <td>
         <div class="row-actions">
           <button class="secondary edit-btn" data-id="${p.id}">編輯</button>
