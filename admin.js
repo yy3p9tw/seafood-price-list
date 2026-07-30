@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=42';
+import { auth } from './firebase-config.js?v=43';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=42';
+} from './products-service.js?v=43';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -88,7 +88,6 @@ const fieldPriceNotes = document.getElementById('fieldPriceNotes');
 const categoryList = document.getElementById('categoryList');
 const originList = document.getElementById('originList');
 const manufacturerList = document.getElementById('manufacturerList');
-const packagingList = document.getElementById('packagingList');
 const productTableBody = document.getElementById('productTableBody');
 const clearAllBtn = document.getElementById('clearAllBtn');
 const productSearchInput = document.getElementById('productSearchInput');
@@ -634,11 +633,9 @@ function renderDatalists() {
   const categories = Array.from(new Set(currentProducts.map(p => p.category).filter(Boolean))).sort();
   const origins = Array.from(new Set(currentProducts.map(p => p.origin).filter(Boolean))).sort();
   const manufacturers = Array.from(new Set(currentProducts.map(p => p.manufacturer).filter(Boolean))).sort();
-  const packagingSpecs = Array.from(new Set(currentProducts.map(p => p.packagingSpec).filter(Boolean))).sort();
   categoryList.innerHTML = categories.map(c => `<option value="${escapeHTML(c)}"></option>`).join('');
   originList.innerHTML = origins.map(o => `<option value="${escapeHTML(o)}"></option>`).join('');
   manufacturerList.innerHTML = manufacturers.map(m => `<option value="${escapeHTML(m)}"></option>`).join('');
-  packagingList.innerHTML = packagingSpecs.map(p => `<option value="${escapeHTML(p)}"></option>`).join('');
 }
 
 clearAllBtn.addEventListener('click', async () => {

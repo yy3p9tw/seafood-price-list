@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=42" />
+  <link rel="stylesheet" href="style.css?v=43" />
 </head>
 <body>
   <header class="site-header">
@@ -67,9 +67,8 @@
               <datalist id="manufacturerList"></datalist>
             </div>
             <div class="field">
-              <label>包裝規格</label>
-              <input type="text" id="fieldPackaging" list="packagingList" placeholder="例如：1台斤/包、5公斤/箱" />
-              <datalist id="packagingList"></datalist>
+              <label>包裝規格（有多種規格可以分行填，訪客卡片會照樣分行顯示）</label>
+              <textarea id="fieldPackaging" rows="2" placeholder="例如：90克/包(50包/件)&#10;700克/包(10包/件)"></textarea>
             </div>
           </div>
 
@@ -209,6 +208,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=42"></script>
+  <script type="module" src="admin.js?v=43"></script>
 </body>
 </html>
