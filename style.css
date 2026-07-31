@@ -600,6 +600,23 @@ button.danger:hover {
   padding: 5px 10px;
 }
 
+.admin-table tbody tr[draggable="true"] {
+  cursor: grab;
+}
+
+.admin-table tbody tr.dragging {
+  opacity: 0.4;
+}
+
+.admin-table tbody tr.drag-over {
+  box-shadow: inset 0 2px 0 var(--color-primary);
+}
+
+.drag-handle {
+  color: var(--color-text-muted);
+  cursor: grab;
+}
+
 .row-actions {
   display: flex;
   gap: 6px;

@@ -1,8 +1,9 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=47';
+import { app } from './firebase-config.js?v=48';
 import {
+  getAuth,
   signInWithEmailAndPassword,
   onAuthStateChanged,
   signOut,
@@ -16,7 +17,9 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=47';
+} from './products-service.js?v=48';
+
+const auth = getAuth(app);
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -112,25 +115,20 @@ function nextSortOrderFor(category) {
   return Math.max(...inCategory.map(p => p.sortOrder || 0)) + 10;
 }
 
-async function moveProduct(id, direction) {
-  const list = sortedProducts();
-  const idx = list.findIndex(p => p.id === id);
-  const swapIdx = idx + direction;
-  if (idx === -1 || swapIdx < 0 || swapIdx >= list.length) return;
-  const a = list[idx];
-  const b = list[swapIdx];
-  if (a.category !== b.category) return;
-  let aOrder = a.sortOrder || 0;
-  let bOrder = b.sortOrder || 0;
-  if (aOrder === bOrder) {
-    // 兩者順序值相同時交換無效，先錯開一點
-    bOrder = direction > 0 ? aOrder + 1 : aOrder - 1;
-  }
-  const { id: aId, ...aData } = a;
-  const { id: bId, ...bData } = b;
+// 拖拉整個分類的產品到新順序後，把該分類內每個產品的 sortOrder 重新編號（10, 20, 30...）
+async function reorderCategory(category, orderedIds) {
+  const updates = [];
+  orderedIds.forEach((id, i) => {
+    const product = currentProducts.find(p => p.id === id);
+    if (!product) return;
+    const newOrder = (i + 1) * 10;
+    if ((product.sortOrder || 0) === newOrder) return;
+    const { id: pid, ...data } = product;
+    updates.push(updateProduct(pid, { ...data, sortOrder: newOrder }));
+  });
+  if (!updates.length) return;
   try {
-    await updateProduct(aId, { ...aData, sortOrder: bOrder });
-    await updateProduct(bId, { ...bData, sortOrder: aOrder });
+    await Promise.all(updates);
   } catch (err) {
     alert('調整順序失敗：' + err.message);
   }
@@ -625,25 +623,22 @@ function renderTable() {
     return;
   }
 
+  // 搜尋篩選中時順序會跳過其他同分類產品，拖拉排序容易亂掉，所以篩選時關閉拖拉
+  const dragEnabled = !keyword;
+
   productTableBody.innerHTML = list.map((p, i) => {
     const prev = list[i - 1];
-    const next = list[i + 1];
-    // 篩選時上/下移可能會跳過其他同分類的產品，關掉篩選再排序比較不會亂
-    const canMoveUp = !keyword && prev && prev.category === p.category;
-    const canMoveDown = !keyword && next && next.category === p.category;
     const showCategoryHeader = !prev || prev.category !== p.category;
     const categoryHeaderRow = showCategoryHeader
       ? `<tr class="admin-table-category-row"><td colspan="4">${escapeHTML(p.category || '未分類')}</td></tr>`
       : '';
     return categoryHeaderRow + `
-    <tr>
-      <td>${escapeHTML(p.name)}</td>
+    <tr data-id="${p.id}" data-category="${escapeHTML(p.category || '')}" draggable="${dragEnabled}">
+      <td>${dragEnabled ? '<span class="drag-handle" title="拖拉調整順序">⠿</span> ' : ''}${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
       <td>${(p.specNotes || []).length ? `${p.specNotes.length} 則` : '-'}</td>
       <td>
         <div class="row-actions">
-          <button type="button" class="secondary move-up-btn" data-id="${p.id}" title="上移" ${canMoveUp ? '' : 'disabled'}>▲</button>
-          <button type="button" class="secondary move-down-btn" data-id="${p.id}" title="下移" ${canMoveDown ? '' : 'disabled'}>▼</button>
           <button class="secondary edit-btn" data-id="${p.id}">編輯</button>
           <button class="danger delete-btn" data-id="${p.id}">刪除</button>
         </div>
@@ -651,14 +646,6 @@ function renderTable() {
     </tr>
   `;
   }).join('');
-
-  productTableBody.querySelectorAll('.move-up-btn').forEach(btn => {
-    btn.addEventListener('click', () => moveProduct(btn.dataset.id, -1));
-  });
-
-  productTableBody.querySelectorAll('.move-down-btn').forEach(btn => {
-    btn.addEventListener('click', () => moveProduct(btn.dataset.id, 1));
-  });
 
   productTableBody.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -683,6 +670,57 @@ function renderTable() {
 }
 
 productSearchInput.addEventListener('input', renderTable);
+
+// ---------- 產品列表拖拉排序 ----------
+
+let dragProductId = null;
+
+productTableBody.addEventListener('dragstart', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if (!tr) return;
+  dragProductId = tr.dataset.id;
+  tr.classList.add('dragging');
+});
+
+productTableBody.addEventListener('dragend', () => {
+  dragProductId = null;
+  productTableBody.querySelectorAll('tr.dragging, tr.drag-over').forEach(tr => {
+    tr.classList.remove('dragging', 'drag-over');
+  });
+});
+
+productTableBody.addEventListener('dragover', e => {
+  if (!dragProductId) return;
+  const tr = e.target.closest('tr[data-id]');
+  if (!tr || tr.dataset.id === dragProductId) return;
+  const draggedProduct = currentProducts.find(p => p.id === dragProductId);
+  if (!draggedProduct || draggedProduct.category !== tr.dataset.category) return;
+  e.preventDefault();
+  tr.classList.add('drag-over');
+});
+
+productTableBody.addEventListener('dragleave', e => {
+  const tr = e.target.closest('tr[data-id]');
+  if (tr) tr.classList.remove('drag-over');
+});
+
+productTableBody.addEventListener('drop', async e => {
+  const tr = e.target.closest('tr[data-id]');
+  if (!tr || !dragProductId || tr.dataset.id === dragProductId) return;
+  e.preventDefault();
+  tr.classList.remove('drag-over');
+  const category = tr.dataset.category;
+  const draggedProduct = currentProducts.find(p => p.id === dragProductId);
+  if (!draggedProduct || draggedProduct.category !== category) return;
+
+  const orderedIds = sortedProducts().filter(p => p.category === category).map(p => p.id);
+  const fromIdx = orderedIds.indexOf(dragProductId);
+  const toIdx = orderedIds.indexOf(tr.dataset.id);
+  if (fromIdx === -1 || toIdx === -1) return;
+  orderedIds.splice(fromIdx, 1);
+  orderedIds.splice(toIdx, 0, dragProductId);
+  await reorderCategory(category, orderedIds);
+});
 
 function renderDatalists() {
   const categories = Array.from(new Set(currentProducts.map(p => p.category).filter(Boolean))).sort();
