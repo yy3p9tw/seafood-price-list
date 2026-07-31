@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=44';
+import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=45';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -177,8 +177,8 @@ salesLoginForm.addEventListener('submit', e => {
 function formatQuoteText(product) {
   const lines = [product.name];
   const metaParts = [];
-  if (!product.hideOrigin && product.origin) metaParts.push(`原料產地：${product.origin}`);
-  if (product.manufacturer) metaParts.push(`製造：${product.manufacturer}`);
+  if (!product.hideOrigin && product.origin) metaParts.push(`原料：${product.origin}`);
+  if (product.manufacturer) metaParts.push(`產地：${product.manufacturer}`);
   if (product.packagingSpec) metaParts.push(`包裝：${product.packagingSpec}`);
   if (metaParts.length) lines.push(metaParts.join('｜'));
   // 複製報價按鈕只有業務模式才看得到，只需要附上業務價格，不需要訪客規格
@@ -321,8 +321,8 @@ function renderProducts() {
       <h3>${escapeHTML(p.name)}</h3>
       ${((!p.hideOrigin && p.origin) || p.manufacturer || p.packagingSpec) ? `
         <div class="meta-info">
-          ${(!p.hideOrigin && p.origin) ? `<span>原料產地：${escapeHTML(p.origin)}</span>` : ''}
-          ${p.manufacturer ? `<span>製造：${escapeHTML(p.manufacturer)}</span>` : ''}
+          ${(!p.hideOrigin && p.origin) ? `<span>原料：${escapeHTML(p.origin)}</span>` : ''}
+          ${p.manufacturer ? `<span>產地：${escapeHTML(p.manufacturer)}</span>` : ''}
           ${p.packagingSpec ? `<span>包裝規格：${escapeHTML(p.packagingSpec)}</span>` : ''}
         </div>
       ` : ''}
