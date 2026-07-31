@@ -377,7 +377,18 @@ function renderImageLibrary() {
   });
 }
 
+let libraryOpen = false;
+
 loadImageLibraryBtn.addEventListener('click', async () => {
+  // 照片一多，展開的照片庫會很長；再點一次按鈕收合回去，不用每次都手動捲回頂端
+  if (libraryOpen) {
+    imageLibraryGrid.style.display = 'none';
+    libraryOpen = false;
+    loadImageLibraryBtn.textContent = '瀏覽 / 重新整理照片庫';
+    return;
+  }
+  libraryOpen = true;
+  loadImageLibraryBtn.textContent = '收合照片庫';
   imageLibraryGrid.style.display = '';
   imageLibraryGrid.innerHTML = `<p class="hint-text">載入中...</p>`;
   try {

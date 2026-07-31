@@ -672,6 +672,15 @@ button.danger:hover {
   margin-top: 10px;
 }
 
+#imageLibraryGrid {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 8px;
+}
+
 .upload-drop-zone {
   border: 2px dashed var(--color-border);
   border-radius: var(--radius);
