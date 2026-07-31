@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts, subscribeToSalesCodes } from './products-service.js?v=46';
+import { subscribeToProducts } from './products-service.js?v=47';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -9,13 +9,6 @@ const searchInput = document.getElementById('searchInput');
 const categoryFilterChips = document.getElementById('categoryFilterChips');
 let selectedCategory = '';
 const dataSourceHint = document.getElementById('dataSourceHint');
-const salesModeToggle = document.getElementById('salesModeToggle');
-const salesLoginModal = document.getElementById('salesLoginModal');
-const salesLoginForm = document.getElementById('salesLoginForm');
-const salesAccountInput = document.getElementById('salesAccountInput');
-const salesPasswordInput = document.getElementById('salesPasswordInput');
-const salesLoginError = document.getElementById('salesLoginError');
-const salesLoginCancelBtn = document.getElementById('salesLoginCancelBtn');
 const siteFooter = document.getElementById('siteFooter');
 
 // 店家聯絡資訊：目前留空，之後有資料時直接填在這裡就會顯示在頁尾（全部留空頁尾就不會顯示）
@@ -43,11 +36,7 @@ function renderFooter() {
   siteFooter.style.display = '';
 }
 
-const SALES_MODE_KEY = 'priceList_salesCode';
-
 let allProducts = [];
-let validSalesCodes = [];
-let salesMode = false;
 
 const CATEGORY_ORDER = ['軟體類', '蝦蟹類', '魚類', '螺貝類', '其他調理類'];
 
@@ -91,15 +80,15 @@ function escapeHTML(str) {
   return div.innerHTML;
 }
 
-// 產地/製造/包裝規格這幾行用同一個排版：標籤固定寬度，值另外分行時會對齊標籤後面，不會頂到最左邊
+// 原料/產地/包裝規格這幾行用同一個排版：標籤固定寬度，值另外分行時會對齊標籤後面，不會頂到最左邊
 function metaLine(label, value) {
   return `<div class="meta-line"><span class="meta-label">${escapeHTML(label)}：</span><span class="meta-value">${escapeHTML(value)}</span></div>`;
 }
 
-// 照片燈箱：點縮圖放大看，點任何地方關閉
+// 照片燈箱：點縮圖放大看，點右上角 ✕ 或點任何地方關閉
 const lightbox = document.createElement('div');
 lightbox.className = 'photo-lightbox';
-lightbox.innerHTML = '<img />';
+lightbox.innerHTML = '<button type="button" class="lightbox-close" aria-label="關閉">✕</button><img />';
 lightbox.addEventListener('click', () => lightbox.classList.remove('open'));
 document.body.appendChild(lightbox);
 document.addEventListener('keydown', e => {
@@ -111,105 +100,13 @@ function openLightbox(src) {
   lightbox.classList.add('open');
 }
 
-function updateSalesModeUI() {
-  salesModeToggle.textContent = salesMode ? '登出業務模式' : '業務登入';
-}
-
-function tryUnlockWithCode(code) {
-  if (!code) return false;
-  if (validSalesCodes.includes(code.trim())) {
-    salesMode = true;
-    localStorage.setItem(SALES_MODE_KEY, code.trim());
-    updateSalesModeUI();
-    renderCategoryOptions();
-    renderProducts();
-    return true;
-  }
-  return false;
-}
-
-function openSalesLoginModal() {
-  salesAccountInput.value = '';
-  salesPasswordInput.value = '';
-  salesLoginError.textContent = '';
-  salesLoginModal.classList.add('open');
-  salesAccountInput.focus();
-}
-
-function closeSalesLoginModal() {
-  salesLoginModal.classList.remove('open');
-}
-
-salesModeToggle.addEventListener('click', e => {
-  e.preventDefault();
-  if (salesMode) {
-    if (!confirm('確定要登出業務模式嗎？登出後這台裝置會回到訪客模式（看不到價格）。')) return;
-    salesMode = false;
-    localStorage.removeItem(SALES_MODE_KEY);
-    updateSalesModeUI();
-    renderCategoryOptions();
-    renderProducts();
-    return;
-  }
-  openSalesLoginModal();
-});
-
-salesLoginCancelBtn.addEventListener('click', () => closeSalesLoginModal());
-
-salesLoginModal.addEventListener('click', e => {
-  if (e.target === salesLoginModal) closeSalesLoginModal();
-});
-
-salesLoginForm.addEventListener('submit', e => {
-  e.preventDefault();
-  const account = salesAccountInput.value.trim();
-  const password = salesPasswordInput.value.trim();
-  if (!account || !password) {
-    salesLoginError.textContent = '請輸入帳號與密碼';
-    return;
-  }
-  if (account !== password) {
-    salesLoginError.textContent = '帳號與密碼不一致';
-    return;
-  }
-  if (!tryUnlockWithCode(account)) {
-    salesLoginError.textContent = '帳號或密碼不正確';
-    return;
-  }
-  closeSalesLoginModal();
-});
-
-function formatQuoteText(product) {
-  const lines = [product.name];
-  const metaParts = [];
-  if (!product.hideOrigin && product.origin) metaParts.push(`原料：${product.origin}`);
-  if (product.manufacturer) metaParts.push(`產地：${product.manufacturer}`);
-  if (product.packagingSpec) metaParts.push(`包裝：${product.packagingSpec}`);
-  if (metaParts.length) lines.push(metaParts.join('｜'));
-  // 複製報價按鈕只有業務模式才看得到，只需要附上業務價格，不需要訪客規格
-  if ((product.prices || []).length) {
-    lines.push('—');
-    product.prices.forEach(s => lines.push(`${s.key}：${s.value}`));
-  }
-  if ((product.priceNotes || []).length) {
-    lines.push('業務備註：' + product.priceNotes.join('；'));
-  }
-  return lines.join('\n');
-}
-
 function getCategoriesFrom(products) {
   const set = new Set(products.map(p => p.category).filter(Boolean));
   return Array.from(set).sort();
 }
 
-// 有些商品整項只給業務看（例如尚未正式上架、只是業務內部參考的品項），
-// 訪客模式下要整個從清單裡拿掉，不只是價格不顯示
-function getVisibleProducts() {
-  return salesMode ? allProducts : allProducts.filter(p => !p.hiddenFromGuest);
-}
-
 function renderCategoryOptions() {
-  const categories = getCategoriesFrom(getVisibleProducts());
+  const categories = getCategoriesFrom(allProducts);
   if (selectedCategory && !categories.includes(selectedCategory)) {
     selectedCategory = '';
   }
@@ -236,9 +133,7 @@ function productMatchesKeyword(product, keyword) {
     product.manufacturer,
     product.packagingSpec,
     ...(product.specs || []).flatMap(s => [s.key, s.value]),
-    ...(product.specNotes || []),
-    ...(product.prices || []).flatMap(s => [s.key, s.value]),
-    ...(product.priceNotes || [])
+    ...(product.specNotes || [])
   ];
   return haystacks.some(text => (text || '').toLowerCase().includes(keyword));
 }
@@ -278,7 +173,7 @@ function renderOverview(products) {
 }
 
 function renderProducts() {
-  let products = getVisibleProducts();
+  let products = allProducts;
 
   const keyword = searchInput.value.trim().toLowerCase();
   products = products.filter(p => productMatchesKeyword(p, keyword));
@@ -308,14 +203,9 @@ function renderProducts() {
   renderOverview(products);
 
   const cardHTML = p => {
-    // 訪客模式只顯示訪客規格/備註；業務模式只顯示業務價格/備註，兩邊資料完全分開顯示。
-    // 業務價格可以是空的（還沒報價），這種情況業務模式就退回顯示訪客規格，不要整段空白
-    const prices = salesMode ? (p.prices || []) : [];
-    const priceNotes = salesMode ? (p.priceNotes || []) : [];
-    const showGuestFallback = !salesMode || prices.length === 0;
-    const specs = showGuestFallback ? (p.specs || []) : [];
-    const specNotes = showGuestFallback ? (p.specNotes || []) : [];
-    // 有照片就用照片牆取代規格文字（訪客/業務都看得到照片），沒照片才退回顯示規格文字
+    const specs = p.specs || [];
+    const specNotes = p.specNotes || [];
+    // 有照片就用照片牆取代規格文字，沒照片才顯示規格文字
     const photos = p.photos || [];
     return `
     <div class="product-card" id="product-${p.id}">
@@ -348,20 +238,6 @@ function renderProducts() {
           </ul>
         </div>
       ` : ''}
-      ${prices.length ? `
-        <ul class="spec-list${prices.length > 4 ? ' spec-list-grid' : ''}">
-          ${prices.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
-        </ul>
-      ` : ''}
-      ${priceNotes.length ? `
-        <div class="spec-notes">
-          <div class="spec-notes-title">業務備註</div>
-          <ul>
-            ${priceNotes.map(n => `<li>${escapeHTML(n)}</li>`).join('')}
-          </ul>
-        </div>
-      ` : ''}
-      ${salesMode ? `<button type="button" class="secondary copy-quote-btn" data-id="${p.id}">複製報價</button>` : ''}
     </div>
   `;
   };
@@ -405,48 +281,15 @@ window.addEventListener('scroll', () => {
   backToOverviewBtn.style.display = window.scrollY > overviewBottom ? 'block' : 'none';
 });
 
-productGrid.addEventListener('click', async e => {
+productGrid.addEventListener('click', e => {
   const thumb = e.target.closest('.photo-thumb');
-  if (thumb) {
-    openLightbox(thumb.src);
-    return;
-  }
-  const btn = e.target.closest('.copy-quote-btn');
-  if (!btn) return;
-  const product = allProducts.find(p => p.id === btn.dataset.id);
-  if (!product) return;
-  try {
-    await navigator.clipboard.writeText(formatQuoteText(product));
-    const original = btn.textContent;
-    btn.textContent = '已複製！';
-    btn.disabled = true;
-    setTimeout(() => {
-      btn.textContent = original;
-      btn.disabled = false;
-    }, 1500);
-  } catch (err) {
-    alert('複製失敗，請手動選取文字複製');
-  }
+  if (!thumb) return;
+  openLightbox(thumb.src);
 });
 
 searchInput.addEventListener('input', renderProducts);
 
 renderFooter();
-
-subscribeToSalesCodes(
-  codes => {
-    validSalesCodes = codes;
-    const storedCode = localStorage.getItem(SALES_MODE_KEY);
-    const shouldUnlock = storedCode && codes.includes(storedCode);
-    if (shouldUnlock !== salesMode) {
-      salesMode = shouldUnlock;
-      updateSalesModeUI();
-      renderCategoryOptions();
-      renderProducts();
-    }
-  },
-  err => console.error('讀取業務登入碼失敗', err)
-);
 
 subscribeToProducts(
   products => {

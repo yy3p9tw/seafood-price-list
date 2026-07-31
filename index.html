@@ -7,14 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=46" />
+  <link rel="stylesheet" href="style.css?v=47" />
 </head>
 <body>
   <header class="site-header site-header-hero">
     <div class="site-header-row">
       <h1>產品目錄</h1>
       <nav>
-        <a href="#" id="salesModeToggle">業務登入</a>
         <a href="admin.html">後台管理</a>
       </nav>
     </div>
@@ -41,19 +40,6 @@
 
   <button type="button" id="backToOverviewBtn" class="back-to-overview" style="display:none;">↑ 回到總覽</button>
 
-  <div id="salesLoginModal" class="sales-login-modal">
-    <div class="sales-login-box">
-      <h2>業務登入</h2>
-      <form id="salesLoginForm">
-        <input type="text" id="salesAccountInput" placeholder="帳號" autocomplete="username" />
-        <input type="password" id="salesPasswordInput" placeholder="密碼" autocomplete="current-password" />
-        <div class="error-text" id="salesLoginError"></div>
-        <button type="submit" style="width:100%;">登入</button>
-        <button type="button" id="salesLoginCancelBtn" class="secondary" style="width:100%; margin-top:8px;">取消</button>
-      </form>
-    </div>
-  </div>
-
-  <script type="module" src="app.js?v=46"></script>
+  <script type="module" src="app.js?v=47"></script>
 </body>
 </html>

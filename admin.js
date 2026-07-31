@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=46';
+import { auth } from './firebase-config.js?v=47';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -15,10 +15,8 @@ import {
   deleteProduct,
   clearAllProducts,
   importProducts,
-  exportProductsAsJSON,
-  subscribeToSalesCodes,
-  setSalesCodes
-} from './products-service.js?v=46';
+  exportProductsAsJSON
+} from './products-service.js?v=47';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');
@@ -42,7 +40,6 @@ const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldHideOrigin = document.getElementById('fieldHideOrigin');
 const fieldManufacturer = document.getElementById('fieldManufacturer');
 const fieldPackaging = document.getElementById('fieldPackaging');
-const fieldHiddenFromGuest = document.getElementById('fieldHiddenFromGuest');
 const fieldNewBadge = document.getElementById('fieldNewBadge');
 const photoUrlInput = document.getElementById('photoUrlInput');
 const addPhotoUrlBtn = document.getElementById('addPhotoUrlBtn');
@@ -57,7 +54,7 @@ const uploadDropZone = document.getElementById('uploadDropZone');
 const uploadFileInput = document.getElementById('uploadFileInput');
 const uploadMsg = document.getElementById('uploadMsg');
 
-// 表單裡的商品照片/訪客規格/業務價格三大塊，點標題可以個別折疊，不用每次都捲過整段
+// 表單裡的商品照片/規格兩大塊，點標題可以個別折疊，不用每次都捲過整段
 document.querySelectorAll('.form-section-toggle').forEach(header => {
   const body = header.nextElementSibling;
   const arrow = header.querySelector('.toggle-arrow');
@@ -68,20 +65,17 @@ document.querySelectorAll('.form-section-toggle').forEach(header => {
   });
 });
 
-// 進階設定（業務登入碼管理、備份與還原）平常用不到，預設收起來
+// 進階設定（備份與還原）平常用不到，預設收起來
 const toggleAdvancedBtn = document.getElementById('toggleAdvancedBtn');
 const advancedSettings = document.getElementById('advancedSettings');
 toggleAdvancedBtn.addEventListener('click', () => {
   const collapsed = advancedSettings.style.display === 'none';
   advancedSettings.style.display = collapsed ? '' : 'none';
-  toggleAdvancedBtn.textContent = collapsed ? '進階設定（業務登入碼、備份與還原） ▴' : '進階設定（業務登入碼、備份與還原） ▾';
+  toggleAdvancedBtn.textContent = collapsed ? '進階設定（備份與還原） ▴' : '進階設定（備份與還原） ▾';
 });
 const guestSpecRows = document.getElementById('guestSpecRows');
 const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
-const priceRows = document.getElementById('priceRows');
-const addPriceBtn = document.getElementById('addPriceBtn');
-const fieldPriceNotes = document.getElementById('fieldPriceNotes');
 const categoryList = document.getElementById('categoryList');
 const originList = document.getElementById('originList');
 const manufacturerList = document.getElementById('manufacturerList');
@@ -94,16 +88,10 @@ const importBtn = document.getElementById('importBtn');
 const importFile = document.getElementById('importFile');
 const ioMsg = document.getElementById('ioMsg');
 
-const newSalesCode = document.getElementById('newSalesCode');
-const addSalesCodeBtn = document.getElementById('addSalesCodeBtn');
-const salesCodeList = document.getElementById('salesCodeList');
-
 let editingId = null;
 let currentPhotos = [];
 let currentProducts = [];
 let unsubscribeProducts = null;
-let currentSalesCodes = [];
-let unsubscribeSalesCodes = null;
 
 // 跟前台同一套分類順序，讓列表排序跟前台一致，上/下移才有意義
 const CATEGORY_ORDER = ['軟體類', '蝦蟹類', '魚類', '螺貝類', '其他調理類'];
@@ -218,15 +206,6 @@ onAuthStateChanged(auth, user => {
         }
       );
     }
-    if (!unsubscribeSalesCodes) {
-      unsubscribeSalesCodes = subscribeToSalesCodes(
-        codes => {
-          currentSalesCodes = codes;
-          renderSalesCodeList();
-        },
-        err => console.error('讀取業務登入碼失敗', err)
-      );
-    }
   } else {
     loginBox.style.display = 'block';
     adminContent.style.display = 'none';
@@ -234,16 +213,12 @@ onAuthStateChanged(auth, user => {
       unsubscribeProducts();
       unsubscribeProducts = null;
     }
-    if (unsubscribeSalesCodes) {
-      unsubscribeSalesCodes();
-      unsubscribeSalesCodes = null;
-    }
     currentProducts = [];
     resetForm();
   }
 });
 
-// ---------- 規格/價格欄位 (動態新增/刪除，訪客規格與業務價格共用同一套邏輯) ----------
+// ---------- 規格欄位 (動態新增/刪除) ----------
 
 function addKeyValueRow(container, key = '', value = '', keyPlaceholder = '名稱', valuePlaceholder = '內容') {
   const row = document.createElement('div');
@@ -269,7 +244,6 @@ function getNotesFrom(textarea) {
 }
 
 addGuestSpecBtn.addEventListener('click', () => addKeyValueRow(guestSpecRows, '', '', '規格名稱，例如：20/30', '規格內容，例如：尺寸/等級'));
-addPriceBtn.addEventListener('click', () => addKeyValueRow(priceRows, '', '', '規格名稱，例如：20/30 基本', '價格，例如：$200'));
 
 function escapeHTML(str) {
   const div = document.createElement('div');
@@ -279,9 +253,11 @@ function escapeHTML(str) {
 
 // ---------- 商品照片 (直接貼網址，Firestore 只存網址字串) ----------
 
+let dragFromIndex = null;
+
 function renderPhotoPreview() {
   photoPreviewGrid.innerHTML = currentPhotos.map((url, i) => `
-    <div class="photo-preview-item">
+    <div class="photo-preview-item" draggable="true" data-index="${i}">
       <img src="${escapeHTML(url)}" alt="" />
       <button type="button" class="photo-preview-remove" data-index="${i}">×</button>
     </div>
@@ -291,6 +267,33 @@ function renderPhotoPreview() {
       currentPhotos.splice(Number(btn.dataset.index), 1);
       renderPhotoPreview();
       renderImageLibrary();
+    });
+  });
+  // 拖曳排序：拖動縮圖到新位置即可調整照片順序（第一張會是訪客卡片顯示的主圖）
+  photoPreviewGrid.querySelectorAll('.photo-preview-item').forEach(item => {
+    item.addEventListener('dragstart', () => {
+      dragFromIndex = Number(item.dataset.index);
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      dragFromIndex = null;
+    });
+    item.addEventListener('dragover', e => {
+      e.preventDefault();
+      item.classList.add('drag-over');
+    });
+    item.addEventListener('dragleave', () => {
+      item.classList.remove('drag-over');
+    });
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      const toIndex = Number(item.dataset.index);
+      if (dragFromIndex === null || dragFromIndex === toIndex) return;
+      const [moved] = currentPhotos.splice(dragFromIndex, 1);
+      currentPhotos.splice(toIndex, 0, moved);
+      renderPhotoPreview();
     });
   });
 }
@@ -567,13 +570,10 @@ function resetForm() {
   currentPhotos = [];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
-  fieldHiddenFromGuest.checked = false;
   fieldNewBadge.checked = false;
   fieldHideOrigin.checked = false;
   guestSpecRows.innerHTML = '';
   fieldGuestNotes.value = '';
-  priceRows.innerHTML = '';
-  fieldPriceNotes.value = '';
   formTitle.textContent = '新增產品';
   submitBtn.textContent = '新增產品';
   cancelEditBtn.style.display = 'none';
@@ -598,14 +598,10 @@ function loadProductIntoForm(product) {
   currentPhotos = [...(product.photos || [])];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
-  fieldHiddenFromGuest.checked = !!product.hiddenFromGuest;
   fieldNewBadge.checked = !!product.newBadge;
   guestSpecRows.innerHTML = '';
   (product.specs || []).forEach(s => addKeyValueRow(guestSpecRows, s.key, s.value, '規格名稱，例如：20/30', '規格內容，例如：尺寸/等級'));
   fieldGuestNotes.value = (product.specNotes || []).join('\n');
-  priceRows.innerHTML = '';
-  (product.prices || []).forEach(s => addKeyValueRow(priceRows, s.key, s.value, '規格名稱，例如：20/30 基本', '價格，例如：$200'));
-  fieldPriceNotes.value = (product.priceNotes || []).join('\n');
   formTitle.textContent = '編輯產品：' + product.name;
   submitBtn.textContent = '儲存變更';
   cancelEditBtn.style.display = 'inline-block';
@@ -624,15 +620,12 @@ productForm.addEventListener('submit', async e => {
     hideOrigin: fieldHideOrigin.checked,
     manufacturer: fieldManufacturer.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
-    hiddenFromGuest: fieldHiddenFromGuest.checked,
     newBadge: fieldNewBadge.checked,
     // 編輯時沿用原本的排序值；新增產品預設排在該分類最後面，之後可以用上/下移調整
     sortOrder: existingProduct ? (existingProduct.sortOrder || 0) : nextSortOrderFor(category),
     photos: currentPhotos,
     specs: getRowsFrom(guestSpecRows),
-    specNotes: getNotesFrom(fieldGuestNotes),
-    prices: getRowsFrom(priceRows),
-    priceNotes: getNotesFrom(fieldPriceNotes)
+    specNotes: getNotesFrom(fieldGuestNotes)
   };
   if (!data.name) return;
 
@@ -658,7 +651,7 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
 
@@ -669,7 +662,7 @@ function renderTable() {
     : sorted;
 
   if (list.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
     return;
   }
 
@@ -681,15 +674,13 @@ function renderTable() {
     const canMoveDown = !keyword && next && next.category === p.category;
     const showCategoryHeader = !prev || prev.category !== p.category;
     const categoryHeaderRow = showCategoryHeader
-      ? `<tr class="admin-table-category-row"><td colspan="6">${escapeHTML(p.category || '未分類')}</td></tr>`
+      ? `<tr class="admin-table-category-row"><td colspan="4">${escapeHTML(p.category || '未分類')}</td></tr>`
       : '';
     return categoryHeaderRow + `
     <tr>
       <td>${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
-      <td>${p.hiddenFromGuest ? '<span style="color:var(--color-danger); font-weight:600;">僅業務</span>' : '是'}</td>
       <td>${(p.specs || []).length ? `${p.specs.length} 項` : '-'}</td>
-      <td>${(p.prices || []).length ? `${p.prices.length} 項` : '-'}</td>
       <td>
         <div class="row-actions">
           <button type="button" class="secondary move-up-btn" data-id="${p.id}" title="上移" ${canMoveUp ? '' : 'disabled'}>▲</button>
@@ -752,51 +743,6 @@ clearAllBtn.addEventListener('click', async () => {
   } catch (err) {
     alert('清空失敗：' + err.message);
   }
-});
-
-// ---------- 業務登入碼管理 ----------
-
-function renderSalesCodeList() {
-  if (currentSalesCodes.length === 0) {
-    salesCodeList.innerHTML = `<p class="hint-text">尚未設定任何登入碼，業務目前都無法登入查看價格。</p>`;
-    return;
-  }
-  salesCodeList.innerHTML = currentSalesCodes.map(code => `
-    <span class="badge" style="display:inline-flex; align-items:center; gap:8px; margin:0 8px 8px 0;">
-      ${escapeHTML(code)}
-      <button type="button" class="danger remove-sales-code" data-code="${escapeHTML(code)}" style="padding:2px 8px; font-size:12px;">移除</button>
-    </span>
-  `).join('');
-
-  salesCodeList.querySelectorAll('.remove-sales-code').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      if (!confirm(`確定要移除登入碼「${btn.dataset.code}」嗎？`)) return;
-      try {
-        await setSalesCodes(currentSalesCodes.filter(c => c !== btn.dataset.code));
-      } catch (err) {
-        alert('移除失敗：' + err.message);
-      }
-    });
-  });
-}
-
-addSalesCodeBtn.addEventListener('click', async () => {
-  const code = newSalesCode.value.trim();
-  if (!code) return;
-  if (currentSalesCodes.includes(code)) {
-    alert('這個登入碼已經存在了');
-    return;
-  }
-  try {
-    await setSalesCodes([...currentSalesCodes, code]);
-    newSalesCode.value = '';
-  } catch (err) {
-    alert('新增失敗：' + err.message);
-  }
-});
-
-newSalesCode.addEventListener('keydown', e => {
-  if (e.key === 'Enter') addSalesCodeBtn.click();
 });
 
 // ---------- 匯出 / 匯入（備份用） ----------

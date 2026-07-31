@@ -424,13 +424,6 @@ main {
   white-space: pre-line;
 }
 
-.copy-quote-btn {
-  margin-top: auto;
-  align-self: flex-start;
-  font-size: 13px;
-  padding: 7px 14px;
-}
-
 .spec-list {
   list-style: none;
   margin: 0;
@@ -531,6 +524,7 @@ main {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.85);
   z-index: 1000;
   align-items: center;
@@ -549,6 +543,26 @@ main {
   max-height: 100%;
   border-radius: 8px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1001;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .empty-state {
@@ -739,6 +753,7 @@ button.danger:hover {
   position: relative;
   width: 90px;
   height: 90px;
+  cursor: grab;
 }
 
 .photo-preview-item img {
@@ -747,6 +762,16 @@ button.danger:hover {
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--color-border);
+  pointer-events: none;
+}
+
+.photo-preview-item.dragging {
+  opacity: 0.4;
+}
+
+.photo-preview-item.drag-over img {
+  border-color: var(--color-primary, #2563eb);
+  border-width: 2px;
 }
 
 .photo-preview-remove,
@@ -831,10 +856,6 @@ button.danger:hover {
   color: var(--color-text-muted);
 }
 
-.business-section h3 {
-  color: var(--color-danger);
-}
-
 .form-section-toggle {
   cursor: pointer;
   display: flex;
@@ -884,50 +905,6 @@ button.danger:hover {
   color: var(--color-danger);
   font-size: 13px;
   min-height: 18px;
-}
-
-.sales-login-modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.sales-login-modal.open {
-  display: flex;
-}
-
-.sales-login-box {
-  max-width: 360px;
-  width: 100%;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 28px;
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-
-.sales-login-box h2 {
-  margin-top: 0;
-}
-
-.sales-login-box input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 12px;
-  box-sizing: border-box;
 }
 
 .hint-text {
