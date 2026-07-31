@@ -132,7 +132,6 @@ function productMatchesKeyword(product, keyword) {
     product.origin,
     product.manufacturer,
     product.packagingSpec,
-    ...(product.specs || []).flatMap(s => [s.key, s.value]),
     ...(product.specNotes || [])
   ];
   return haystacks.some(text => (text || '').toLowerCase().includes(keyword));
@@ -203,15 +202,12 @@ function renderProducts() {
   renderOverview(products);
 
   const cardHTML = p => {
-    const specs = p.specs || [];
     const specNotes = p.specNotes || [];
-    // 有照片就用照片牆取代規格文字，沒照片才顯示規格文字
     const photos = p.photos || [];
     return `
     <div class="product-card" id="product-${p.id}">
       <div class="badge-row">
         ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
-        ${p.newBadge ? `<span class="badge badge-new">本次更新</span>` : ''}
       </div>
       <h3>${escapeHTML(p.name)}</h3>
       ${((!p.hideOrigin && p.origin) || p.manufacturer || p.packagingSpec) ? `
@@ -225,10 +221,6 @@ function renderProducts() {
         <div class="photo-strip">
           ${photos.map((url, i) => `<img class="photo-thumb" src="${escapeHTML(url)}" data-product-id="${p.id}" data-photo-index="${i}" alt="${escapeHTML(p.name)}" loading="lazy" />`).join('')}
         </div>
-      ` : specs.length ? `
-        <ul class="spec-list${specs.length > 4 ? ' spec-list-grid' : ''}">
-          ${specs.map(s => `<li><span>${escapeHTML(s.key)}</span><span>${escapeHTML(s.value)}</span></li>`).join('')}
-        </ul>
       ` : ''}
       ${specNotes.length ? `
         <div class="spec-notes">

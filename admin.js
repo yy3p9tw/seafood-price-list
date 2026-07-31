@@ -40,9 +40,6 @@ const fieldOrigin = document.getElementById('fieldOrigin');
 const fieldHideOrigin = document.getElementById('fieldHideOrigin');
 const fieldManufacturer = document.getElementById('fieldManufacturer');
 const fieldPackaging = document.getElementById('fieldPackaging');
-const fieldNewBadge = document.getElementById('fieldNewBadge');
-const photoUrlInput = document.getElementById('photoUrlInput');
-const addPhotoUrlBtn = document.getElementById('addPhotoUrlBtn');
 const photoPreviewGrid = document.getElementById('photoPreviewGrid');
 const photoUploadMsg = document.getElementById('photoUploadMsg');
 const loadImageLibraryBtn = document.getElementById('loadImageLibraryBtn');
@@ -73,8 +70,6 @@ toggleAdvancedBtn.addEventListener('click', () => {
   advancedSettings.style.display = collapsed ? '' : 'none';
   toggleAdvancedBtn.textContent = collapsed ? '進階設定（備份與還原） ▴' : '進階設定（備份與還原） ▾';
 });
-const guestSpecRows = document.getElementById('guestSpecRows');
-const addGuestSpecBtn = document.getElementById('addGuestSpecBtn');
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
 const categoryList = document.getElementById('categoryList');
 const originList = document.getElementById('originList');
@@ -218,32 +213,9 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// ---------- 規格欄位 (動態新增/刪除) ----------
-
-function addKeyValueRow(container, key = '', value = '', keyPlaceholder = '名稱', valuePlaceholder = '內容') {
-  const row = document.createElement('div');
-  row.className = 'spec-row';
-  row.innerHTML = `
-    <input type="text" class="spec-key" placeholder="${escapeHTML(keyPlaceholder)}" value="${escapeHTML(key)}" />
-    <input type="text" class="spec-value" placeholder="${escapeHTML(valuePlaceholder)}" value="${escapeHTML(value)}" />
-    <button type="button" class="secondary remove-spec">刪除</button>
-  `;
-  row.querySelector('.remove-spec').addEventListener('click', () => row.remove());
-  container.appendChild(row);
-}
-
-function getRowsFrom(container) {
-  return Array.from(container.querySelectorAll('.spec-row')).map(row => ({
-    key: row.querySelector('.spec-key').value.trim(),
-    value: row.querySelector('.spec-value').value.trim()
-  })).filter(s => s.key || s.value);
-}
-
 function getNotesFrom(textarea) {
   return textarea.value.split('\n').map(line => line.trim()).filter(Boolean);
 }
-
-addGuestSpecBtn.addEventListener('click', () => addKeyValueRow(guestSpecRows, '', '', '規格名稱，例如：20/30', '規格內容，例如：尺寸/等級'));
 
 function escapeHTML(str) {
   const div = document.createElement('div');
@@ -297,23 +269,6 @@ function renderPhotoPreview() {
     });
   });
 }
-
-function addPhotoUrl() {
-  const url = photoUrlInput.value.trim();
-  if (!url) return;
-  currentPhotos.push(url);
-  photoUrlInput.value = '';
-  photoUploadMsg.textContent = '';
-  renderPhotoPreview();
-}
-
-addPhotoUrlBtn.addEventListener('click', addPhotoUrl);
-photoUrlInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    addPhotoUrl();
-  }
-});
 
 // ---------- 照片庫 (瀏覽 GitHub images 資料夾裡已經上傳的照片，點選即可加入；也可以永久刪除) ----------
 
@@ -570,9 +525,7 @@ function resetForm() {
   currentPhotos = [];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
-  fieldNewBadge.checked = false;
   fieldHideOrigin.checked = false;
-  guestSpecRows.innerHTML = '';
   fieldGuestNotes.value = '';
   formTitle.textContent = '新增產品';
   submitBtn.textContent = '新增產品';
@@ -598,9 +551,6 @@ function loadProductIntoForm(product) {
   currentPhotos = [...(product.photos || [])];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
-  fieldNewBadge.checked = !!product.newBadge;
-  guestSpecRows.innerHTML = '';
-  (product.specs || []).forEach(s => addKeyValueRow(guestSpecRows, s.key, s.value, '規格名稱，例如：20/30', '規格內容，例如：尺寸/等級'));
   fieldGuestNotes.value = (product.specNotes || []).join('\n');
   formTitle.textContent = '編輯產品：' + product.name;
   submitBtn.textContent = '儲存變更';
@@ -620,11 +570,9 @@ productForm.addEventListener('submit', async e => {
     hideOrigin: fieldHideOrigin.checked,
     manufacturer: fieldManufacturer.value.trim(),
     packagingSpec: fieldPackaging.value.trim(),
-    newBadge: fieldNewBadge.checked,
     // 編輯時沿用原本的排序值；新增產品預設排在該分類最後面，之後可以用上/下移調整
     sortOrder: existingProduct ? (existingProduct.sortOrder || 0) : nextSortOrderFor(category),
     photos: currentPhotos,
-    specs: getRowsFrom(guestSpecRows),
     specNotes: getNotesFrom(fieldGuestNotes)
   };
   if (!data.name) return;
@@ -680,7 +628,7 @@ function renderTable() {
     <tr>
       <td>${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
-      <td>${(p.specs || []).length ? `${p.specs.length} 項` : '-'}</td>
+      <td>${(p.specNotes || []).length ? `${p.specNotes.length} 則` : '-'}</td>
       <td>
         <div class="row-actions">
           <button type="button" class="secondary move-up-btn" data-id="${p.id}" title="上移" ${canMoveUp ? '' : 'disabled'}>▲</button>

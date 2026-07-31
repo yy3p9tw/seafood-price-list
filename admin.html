@@ -106,27 +106,12 @@
                 <button type="button" class="secondary" id="loadImageLibraryBtn">瀏覽 / 重新整理照片庫</button>
                 <div id="imageLibraryGrid" class="photo-preview-grid"></div>
               </div>
-              <div class="field full">
-                <label>或直接貼照片網址</label>
-                <div class="io-actions">
-                  <input type="text" id="photoUrlInput" placeholder="貼上照片網址..." style="flex:1;" />
-                  <button type="button" class="secondary" id="addPhotoUrlBtn">+ 新增照片</button>
-                </div>
-              </div>
             </div>
           </div>
 
           <div class="form-section guest-section">
-            <h3 class="form-section-toggle">規格<span class="toggle-arrow">▾</span></h3>
+            <h3 class="form-section-toggle">備註<span class="toggle-arrow">▾</span></h3>
             <div class="form-section-body">
-              <div class="field full">
-                <label><input type="checkbox" id="fieldNewBadge" /> 顯示「本次更新」標籤（手動勾選，不會自動判斷）</label>
-              </div>
-              <div class="field full">
-                <label>規格（尺寸/等級等描述性內容，沒有照片時會顯示這個）</label>
-                <div id="guestSpecRows"></div>
-                <button type="button" class="secondary" id="addGuestSpecBtn">+ 新增規格欄位</button>
-              </div>
               <div class="field full">
                 <label>備註（選填，一行一則）</label>
                 <textarea id="fieldGuestNotes" rows="3" placeholder="例如：解凍即食&#10;每日現貨依實際到貨為主"></textarea>
@@ -152,7 +137,7 @@
               <tr>
                 <th>名稱</th>
                 <th>照片</th>
-                <th>規格</th>
+                <th>備註</th>
                 <th>操作</th>
               </tr>
             </thead>

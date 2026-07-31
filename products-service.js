@@ -23,9 +23,7 @@ function normalize(data) {
     manufacturer: data.manufacturer || '',
     hideOrigin: !!data.hideOrigin,
     packagingSpec: data.packagingSpec || '',
-    specs: Array.isArray(data.specs) ? data.specs : [],
     specNotes: Array.isArray(data.specNotes) ? data.specNotes : [],
-    newBadge: !!data.newBadge,
     sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : 0,
     photos: Array.isArray(data.photos) ? data.photos : [],
     updatedAt: data.updatedAt || Date.now()
