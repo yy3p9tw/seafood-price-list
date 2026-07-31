@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { auth } from './firebase-config.js?v=45';
+import { auth } from './firebase-config.js?v=46';
 import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
@@ -18,7 +18,7 @@ import {
   exportProductsAsJSON,
   subscribeToSalesCodes,
   setSalesCodes
-} from './products-service.js?v=45';
+} from './products-service.js?v=46';
 
 const loginBox = document.getElementById('loginBox');
 const adminContent = document.getElementById('adminContent');

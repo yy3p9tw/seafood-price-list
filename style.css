@@ -409,7 +409,16 @@ main {
   color: var(--color-text-muted);
 }
 
-.meta-info span {
+.meta-line {
+  display: flex;
+}
+
+.meta-label {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.meta-value {
   min-width: 0;
   overflow-wrap: break-word;
   white-space: pre-line;
