@@ -133,7 +133,7 @@ header.site-header-hero nav a:hover {
 main {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 32px 24px;
 }
 
 .toolbar {
@@ -195,32 +195,44 @@ main {
 }
 
 .category-filter-chip.active {
-  background: var(--color-primary);
+  background: var(--color-primary-soft);
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-primary);
+  font-weight: 700;
 }
 
 .category-filter-chip.active:hover {
-  background: var(--color-primary-hover);
+  background: var(--color-primary-soft);
 }
 
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
+  gap: 22px;
 }
 
 .category-heading {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 21px;
   font-weight: 700;
   letter-spacing: 0.2px;
-  margin: 36px 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid var(--color-accent-green);
+  margin: 44px 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
   color: var(--color-text);
+}
+
+.category-heading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 40px;
+  height: 2px;
+  background: var(--color-accent-green);
 }
 
 .category-icon-badge {
@@ -247,6 +259,7 @@ main {
 .category-count {
   font-size: 13px;
   font-weight: 400;
+  letter-spacing: 0.4px;
   color: var(--color-text-muted);
 }
 
@@ -282,6 +295,7 @@ main {
   padding-top: 6px;
   font-size: 12px;
   font-weight: 700;
+  letter-spacing: 0.5px;
   color: var(--color-primary);
 }
 
@@ -388,11 +402,11 @@ main {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 18px;
+  padding: 22px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   max-width: 100%;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -484,16 +498,17 @@ main {
   width: 130px;
   height: 130px;
   object-fit: cover;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  box-shadow: none;
   cursor: pointer;
   background: var(--color-bg);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
 .photo-thumb:hover {
-  transform: scale(1.04);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.03);
+  border-color: var(--color-primary);
 }
 
 .photo-lightbox {
