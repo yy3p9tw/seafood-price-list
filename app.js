@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts } from './products-service.js?v=49';
+import { subscribeToProducts } from './products-service.js?v=50';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -11,18 +11,22 @@ let selectedCategory = '';
 const dataSourceHint = document.getElementById('dataSourceHint');
 const siteFooter = document.getElementById('siteFooter');
 
-// 店家聯絡資訊：目前留空，之後有資料時直接填在這裡就會顯示在頁尾（全部留空頁尾就不會顯示）
+// 店家聯絡資訊：顯示在頁尾（全部留空頁尾就不會顯示文字，但圖標一定會顯示）
 const BUSINESS_INFO = {
-  name: '',
-  phone: '',
-  address: '',
+  name: '磐宇生物科技股份有限公司',
+  phone: '02-2225-0202',
+  fax: '02-2900-8168',
+  address: '243081 新北市泰山區憲訓路36號',
+  taxId: '70604138',
   hours: ''
 };
 
 function renderFooter() {
   const rows = [
-    BUSINESS_INFO.phone ? `<span>電話：${escapeHTML(BUSINESS_INFO.phone)}</span>` : '',
     BUSINESS_INFO.address ? `<span>地址：${escapeHTML(BUSINESS_INFO.address)}</span>` : '',
+    BUSINESS_INFO.phone ? `<span>電話：${escapeHTML(BUSINESS_INFO.phone)}</span>` : '',
+    BUSINESS_INFO.fax ? `<span>傳真：${escapeHTML(BUSINESS_INFO.fax)}</span>` : '',
+    BUSINESS_INFO.taxId ? `<span>統一編號：${escapeHTML(BUSINESS_INFO.taxId)}</span>` : '',
     BUSINESS_INFO.hours ? `<span>營業時間：${escapeHTML(BUSINESS_INFO.hours)}</span>` : ''
   ].filter(Boolean);
   siteFooter.innerHTML = `
