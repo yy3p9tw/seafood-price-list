@@ -403,21 +403,6 @@ main {
   box-shadow: 0 8px 20px rgba(12, 63, 82, 0.12);
 }
 
-.badge-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.product-card .badge {
-  align-self: flex-start;
-  background: var(--color-primary-soft);
-  color: var(--color-primary);
-  font-size: 12px;
-  padding: 3px 9px;
-  border-radius: 999px;
-}
-
 .product-card h3 {
   margin: 0;
   font-size: 18px;
@@ -485,6 +470,12 @@ main {
   padding-left: 4px;
   padding-right: 4px;
   max-width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.photo-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .photo-thumb {

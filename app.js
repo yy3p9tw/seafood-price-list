@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts } from './products-service.js?v=52';
+import { subscribeToProducts } from './products-service.js?v=53';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -207,9 +207,6 @@ function renderProducts() {
     const photos = p.photos || [];
     return `
     <div class="product-card" id="product-${p.id}">
-      <div class="badge-row">
-        ${p.category ? `<span class="badge">${escapeHTML(p.category)}</span>` : ''}
-      </div>
       <h3>${escapeHTML(p.name)}</h3>
       ${((!p.hideOrigin && p.origin) || p.manufacturer || p.packagingSpec) ? `
         <div class="meta-info">
