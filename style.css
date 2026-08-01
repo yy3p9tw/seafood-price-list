@@ -51,6 +51,28 @@ header.site-header h1 {
   color: var(--color-primary);
 }
 
+.site-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.site-logo {
+  height: 36px;
+  width: 36px;
+  object-fit: contain;
+}
+
+/* Hero 頁首底色較深，圖標加白底圓形徽章墊底才不會被背景吃掉 */
+.site-header-hero .site-logo {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  padding: 4px;
+  box-shadow: var(--shadow);
+}
+
 header.site-header nav a {
   color: var(--color-text-muted);
   text-decoration: none;
@@ -373,6 +395,12 @@ main {
   gap: 10px;
   min-width: 0;
   max-width: 100%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(12, 63, 82, 0.12);
 }
 
 .badge-row {
@@ -469,6 +497,12 @@ main {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   background: var(--color-bg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.photo-thumb:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .photo-lightbox {
