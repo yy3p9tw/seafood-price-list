@@ -1,5 +1,5 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts } from './products-service.js?v=48';
+import { subscribeToProducts } from './products-service.js?v=49';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -25,11 +25,8 @@ function renderFooter() {
     BUSINESS_INFO.address ? `<span>地址：${escapeHTML(BUSINESS_INFO.address)}</span>` : '',
     BUSINESS_INFO.hours ? `<span>營業時間：${escapeHTML(BUSINESS_INFO.hours)}</span>` : ''
   ].filter(Boolean);
-  if (!BUSINESS_INFO.name && rows.length === 0) {
-    siteFooter.style.display = 'none';
-    return;
-  }
   siteFooter.innerHTML = `
+    <img src="logo.png" alt="品牌圖標" class="footer-logo" />
     ${BUSINESS_INFO.name ? `<div class="footer-name">${escapeHTML(BUSINESS_INFO.name)}</div>` : ''}
     ${rows.length ? `<div class="footer-details">${rows.join('')}</div>` : ''}
   `;

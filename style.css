@@ -303,6 +303,12 @@ main {
   text-align: center;
 }
 
+.footer-logo {
+  height: 64px;
+  width: auto;
+  margin-bottom: 10px;
+}
+
 .footer-name {
   font-weight: 700;
   font-size: 15px;
