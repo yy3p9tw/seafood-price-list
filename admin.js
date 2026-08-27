@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { app } from './firebase-config.js?v=56';
+import { app } from './firebase-config.js?v=57';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,7 +17,8 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=56';
+} from './products-service.js?v=57';
+import { setReportPassword } from './settings-service.js?v=57';
 
 const auth = getAuth(app);
 
@@ -54,6 +55,14 @@ const uploadDropZone = document.getElementById('uploadDropZone');
 const uploadFileInput = document.getElementById('uploadFileInput');
 const uploadMsg = document.getElementById('uploadMsg');
 
+const reportPreview = document.getElementById('reportPreview');
+const reportUploadMsg = document.getElementById('reportUploadMsg');
+const reportDropZone = document.getElementById('reportDropZone');
+const reportFileInput = document.getElementById('reportFileInput');
+const reportPasswordInput = document.getElementById('reportPasswordInput');
+const saveReportPasswordBtn = document.getElementById('saveReportPasswordBtn');
+const reportPasswordMsg = document.getElementById('reportPasswordMsg');
+
 // 表單裡的商品照片/規格兩大塊，點標題可以個別折疊，不用每次都捲過整段
 document.querySelectorAll('.form-section-toggle').forEach(header => {
   const body = header.nextElementSibling;
@@ -88,6 +97,7 @@ const ioMsg = document.getElementById('ioMsg');
 
 let editingId = null;
 let currentPhotos = [];
+let currentReportUrl = '';
 let currentProducts = [];
 let unsubscribeProducts = null;
 
@@ -516,6 +526,115 @@ uploadFileInput.addEventListener('change', () => {
   uploadFileInput.value = '';
 });
 
+// ---------- 檢驗報告 (單一 PDF，一樣直接上傳到 GitHub) ----------
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('檔案讀取失敗'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderReportPreview() {
+  if (!currentReportUrl) {
+    reportPreview.innerHTML = `<p class="hint-text">尚未上傳檢驗報告</p>`;
+    return;
+  }
+  const filename = decodeURIComponent(currentReportUrl.split('/').pop());
+  reportPreview.innerHTML = `
+    <div class="report-preview-item">
+      <a href="${escapeHTML(currentReportUrl)}" target="_blank" rel="noopener">📄 ${escapeHTML(filename)}</a>
+      <button type="button" class="secondary report-remove-btn">移除</button>
+    </div>
+  `;
+  reportPreview.querySelector('.report-remove-btn').addEventListener('click', () => {
+    currentReportUrl = '';
+    renderReportPreview();
+  });
+}
+
+async function uploadReportToGithub(file) {
+  const pat = localStorage.getItem(GITHUB_PAT_KEY);
+  if (!pat) {
+    reportUploadMsg.style.color = 'var(--color-danger)';
+    reportUploadMsg.textContent = '請先在上面「商品照片」區塊貼上 GitHub 個人存取權杖並存檔，才能上傳報告';
+    return;
+  }
+  reportUploadMsg.style.color = 'var(--color-text-muted)';
+  reportUploadMsg.textContent = '上傳中...';
+  try {
+    const base64 = await fileToBase64(file);
+    const filename = sanitizeFileBase(file.name) + '-' + Date.now() + '.pdf';
+    const path = 'reports/' + filename;
+    const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
+    const res = await fetch(apiPath, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + pat, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '上傳檢驗報告：' + path, content: base64, branch: 'main' })
+    });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.message || ('上傳失敗 (' + res.status + ')'));
+    }
+    currentReportUrl = PAGES_BASE + path.split('/').map(encodeURIComponent).join('/');
+    renderReportPreview();
+    reportUploadMsg.style.color = 'var(--color-success)';
+    reportUploadMsg.textContent = '已上傳，記得存檔商品才會真的套用';
+  } catch (err) {
+    reportUploadMsg.style.color = 'var(--color-danger)';
+    reportUploadMsg.textContent = '上傳失敗：' + err.message;
+  }
+}
+
+reportDropZone.addEventListener('click', () => reportFileInput.click());
+
+reportDropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  reportDropZone.classList.add('dragover');
+});
+
+reportDropZone.addEventListener('dragleave', () => {
+  reportDropZone.classList.remove('dragover');
+});
+
+reportDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  reportDropZone.classList.remove('dragover');
+  const file = Array.from(e.dataTransfer.files).find(f => f.type === 'application/pdf');
+  if (file) uploadReportToGithub(file);
+});
+
+reportFileInput.addEventListener('change', () => {
+  const file = reportFileInput.files[0];
+  if (file) uploadReportToGithub(file);
+  reportFileInput.value = '';
+});
+
+// ---------- 檢驗報告下載密碼（進階設定） ----------
+
+saveReportPasswordBtn.addEventListener('click', async () => {
+  const pw = reportPasswordInput.value.trim();
+  if (!pw) {
+    reportPasswordMsg.style.color = 'var(--color-danger)';
+    reportPasswordMsg.textContent = '請輸入密碼';
+    return;
+  }
+  saveReportPasswordBtn.disabled = true;
+  try {
+    await setReportPassword(pw);
+    reportPasswordMsg.style.color = 'var(--color-success)';
+    reportPasswordMsg.textContent = '密碼已更新';
+    reportPasswordInput.value = '';
+  } catch (err) {
+    reportPasswordMsg.style.color = 'var(--color-danger)';
+    reportPasswordMsg.textContent = '更新失敗：' + err.message;
+  } finally {
+    saveReportPasswordBtn.disabled = false;
+  }
+});
+
 // ---------- 表單 (預設收起來，點「新增產品」或表格裡的「編輯」才展開) ----------
 
 function showForm() {
@@ -534,6 +653,9 @@ function resetForm() {
   currentPhotos = [];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
+  currentReportUrl = '';
+  renderReportPreview();
+  reportUploadMsg.textContent = '';
   fieldHideOrigin.checked = false;
   fieldGuestNotes.value = '';
   formTitle.textContent = '新增產品';
@@ -560,6 +682,9 @@ function loadProductIntoForm(product) {
   currentPhotos = [...(product.photos || [])];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
+  currentReportUrl = product.reportUrl || '';
+  renderReportPreview();
+  reportUploadMsg.textContent = '';
   fieldGuestNotes.value = (product.specNotes || []).join('\n');
   formTitle.textContent = '編輯產品：' + product.name;
   submitBtn.textContent = '儲存變更';
@@ -582,6 +707,7 @@ productForm.addEventListener('submit', async e => {
     // 編輯時沿用原本的排序值；新增產品預設排在該分類最後面，之後可以用上/下移調整
     sortOrder: existingProduct ? (existingProduct.sortOrder || 0) : nextSortOrderFor(category),
     photos: currentPhotos,
+    reportUrl: currentReportUrl,
     specNotes: getNotesFrom(fieldGuestNotes)
   };
   if (!data.name) return;
@@ -608,7 +734,7 @@ cancelEditBtn.addEventListener('click', resetForm);
 
 function renderTable() {
   if (currentProducts.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#6b7280;">尚未新增任何產品</td></tr>`;
     return;
   }
 
@@ -619,7 +745,7 @@ function renderTable() {
     : sorted;
 
   if (list.length === 0) {
-    productTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
+    productTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#6b7280;">沒有符合搜尋的產品</td></tr>`;
     return;
   }
 
@@ -630,12 +756,13 @@ function renderTable() {
     const prev = list[i - 1];
     const showCategoryHeader = !prev || prev.category !== p.category;
     const categoryHeaderRow = showCategoryHeader
-      ? `<tr class="admin-table-category-row"><td colspan="4">${escapeHTML(p.category || '未分類')}</td></tr>`
+      ? `<tr class="admin-table-category-row"><td colspan="5">${escapeHTML(p.category || '未分類')}</td></tr>`
       : '';
     return categoryHeaderRow + `
     <tr data-id="${p.id}" data-category="${escapeHTML(p.category || '')}" draggable="${dragEnabled}">
       <td>${dragEnabled ? '<span class="drag-handle" title="拖拉調整順序">⠿</span> ' : ''}${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
+      <td>${p.reportUrl ? '有' : '-'}</td>
       <td>${(p.specNotes || []).length ? `${p.specNotes.length} 則` : '-'}</td>
       <td>
         <div class="row-actions">

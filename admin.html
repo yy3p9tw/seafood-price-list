@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=56" />
+  <link rel="stylesheet" href="style.css?v=57" />
 </head>
 <body>
   <header class="site-header">
@@ -114,6 +114,23 @@
           </div>
 
           <div class="form-section guest-section">
+            <h3 class="form-section-toggle">檢驗報告（訪客要輸入密碼才能下載，密碼在下面「進階設定」改）<span class="toggle-arrow">▾</span></h3>
+            <div class="form-section-body">
+              <div class="field full">
+                <label>已上傳的檢驗報告</label>
+                <div id="reportPreview" class="report-preview"></div>
+                <p class="hint-text" id="reportUploadMsg"></p>
+              </div>
+              <div class="field full">
+                <div id="reportDropZone" class="upload-drop-zone">
+                  拖曳 PDF 檔到這裡，或點擊選擇檔案
+                  <input type="file" id="reportFileInput" accept="application/pdf" style="display:none;" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section guest-section">
             <h3 class="form-section-toggle">備註<span class="toggle-arrow">▾</span></h3>
             <div class="form-section-body">
               <div class="field full">
@@ -141,6 +158,7 @@
               <tr>
                 <th>名稱</th>
                 <th>照片</th>
+                <th>報告</th>
                 <th>備註</th>
                 <th>操作</th>
               </tr>
@@ -155,6 +173,19 @@
       </div>
 
       <div id="advancedSettings" style="display:none;">
+        <div class="panel">
+          <h2>檢驗報告下載密碼</h2>
+          <p class="hint-text">
+            訪客點商品卡片上的「檢驗報告」下載時，要輸入這組密碼才能下載，訪客輸入對一次後同一台裝置不用再重複輸入。
+            建議用簡單好記的密碼（例如日期 0804），可以隨時在這裡改。
+          </p>
+          <div class="io-actions">
+            <input type="text" id="reportPasswordInput" placeholder="例如：0804" style="max-width:200px;" />
+            <button type="button" class="secondary" id="saveReportPasswordBtn">儲存密碼</button>
+          </div>
+          <p class="hint-text" id="reportPasswordMsg"></p>
+        </div>
+
         <div class="panel">
           <h2>備份與還原</h2>
           <p class="hint-text">
@@ -173,6 +204,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=56"></script>
+  <script type="module" src="admin.js?v=57"></script>
 </body>
 </html>

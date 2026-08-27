@@ -1,5 +1,6 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts } from './products-service.js?v=56';
+import { subscribeToProducts } from './products-service.js?v=57';
+import { hashPassword, getReportPasswordHash } from './settings-service.js?v=57';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -99,6 +100,82 @@ document.addEventListener('keydown', e => {
 function openLightbox(src) {
   lightbox.querySelector('img').src = src;
   lightbox.classList.add('open');
+}
+
+// 檢驗報告下載：輸入一次密碼後，同一台裝置這次瀏覽就不用再輸入
+const REPORT_UNLOCK_KEY = 'seafood_report_unlocked';
+let cachedReportPasswordHash = null;
+let pendingReportUrl = null;
+
+const reportModal = document.createElement('div');
+reportModal.className = 'report-password-modal';
+reportModal.innerHTML = `
+  <div class="report-password-box">
+    <button type="button" class="lightbox-close report-modal-close" aria-label="關閉">✕</button>
+    <h2>請輸入密碼</h2>
+    <p class="hint-text">下載檢驗報告需要密碼，請洽業務或客服人員。</p>
+    <input type="text" inputmode="numeric" class="report-password-field" placeholder="密碼" autocomplete="off" />
+    <div class="error-text report-password-error"></div>
+    <button type="button" class="report-password-submit">確認</button>
+  </div>
+`;
+document.body.appendChild(reportModal);
+
+const reportPasswordField = reportModal.querySelector('.report-password-field');
+const reportPasswordError = reportModal.querySelector('.report-password-error');
+
+function closeReportModal() {
+  reportModal.classList.remove('open');
+  reportPasswordField.value = '';
+  reportPasswordError.textContent = '';
+  pendingReportUrl = null;
+}
+
+function openReportModal(url) {
+  pendingReportUrl = url;
+  reportPasswordError.textContent = '';
+  reportPasswordField.value = '';
+  reportModal.classList.add('open');
+  reportPasswordField.focus();
+}
+
+reportModal.addEventListener('click', e => {
+  if (e.target === reportModal) closeReportModal();
+});
+reportModal.querySelector('.report-modal-close').addEventListener('click', closeReportModal);
+
+async function submitReportPassword() {
+  const entered = reportPasswordField.value.trim();
+  if (!entered) return;
+  try {
+    if (cachedReportPasswordHash === null) {
+      cachedReportPasswordHash = await getReportPasswordHash();
+    }
+    const enteredHash = await hashPassword(entered);
+    if (!cachedReportPasswordHash || enteredHash !== cachedReportPasswordHash) {
+      reportPasswordError.textContent = '密碼不正確';
+      return;
+    }
+    sessionStorage.setItem(REPORT_UNLOCK_KEY, '1');
+    const url = pendingReportUrl;
+    closeReportModal();
+    if (url) window.open(url, '_blank', 'noopener');
+  } catch (err) {
+    reportPasswordError.textContent = '驗證失敗，請稍後再試';
+  }
+}
+
+reportModal.querySelector('.report-password-submit').addEventListener('click', submitReportPassword);
+reportPasswordField.addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitReportPassword();
+});
+
+function requestReportDownload(url) {
+  if (sessionStorage.getItem(REPORT_UNLOCK_KEY) === '1') {
+    window.open(url, '_blank', 'noopener');
+    return;
+  }
+  openReportModal(url);
 }
 
 function getCategoriesFrom(products) {
@@ -228,6 +305,9 @@ function renderProducts() {
           </ul>
         </div>
       ` : ''}
+      ${p.reportUrl ? `
+        <button type="button" class="report-download-btn" data-report-url="${escapeHTML(p.reportUrl)}">📄 檢驗報告下載</button>
+      ` : ''}
     </div>
   `;
   };
@@ -273,8 +353,14 @@ window.addEventListener('scroll', () => {
 
 productGrid.addEventListener('click', e => {
   const thumb = e.target.closest('.photo-thumb');
-  if (!thumb) return;
-  openLightbox(thumb.src);
+  if (thumb) {
+    openLightbox(thumb.src);
+    return;
+  }
+  const reportBtn = e.target.closest('.report-download-btn');
+  if (reportBtn) {
+    requestReportDownload(reportBtn.dataset.reportUrl);
+  }
 });
 
 searchInput.addEventListener('input', renderProducts);
