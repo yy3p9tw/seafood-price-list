@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { app } from './firebase-config.js?v=58';
+import { app } from './firebase-config.js?v=59';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,8 +17,8 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=58';
-import { setReportPassword } from './settings-service.js?v=58';
+} from './products-service.js?v=59';
+import { setReportPassword } from './settings-service.js?v=59';
 
 const auth = getAuth(app);
 
@@ -65,10 +65,13 @@ const reportPasswordInput = document.getElementById('reportPasswordInput');
 const saveReportPasswordBtn = document.getElementById('saveReportPasswordBtn');
 const reportPasswordMsg = document.getElementById('reportPasswordMsg');
 
-// 表單裡的商品照片/規格兩大塊，點標題可以個別折疊，不用每次都捲過整段
+// 表單裡的商品照片/檢驗報告/備註三大塊，點標題可以個別折疊。
+// 預設全部收起來，表單一打開只看到基本資料，需要哪個區塊再自己點開，不用每次都捲過整段
 document.querySelectorAll('.form-section-toggle').forEach(header => {
   const body = header.nextElementSibling;
   const arrow = header.querySelector('.toggle-arrow');
+  body.style.display = 'none';
+  arrow.textContent = '▸';
   header.addEventListener('click', () => {
     const collapsed = body.style.display === 'none';
     body.style.display = collapsed ? '' : 'none';
@@ -76,13 +79,13 @@ document.querySelectorAll('.form-section-toggle').forEach(header => {
   });
 });
 
-// 進階設定（備份與還原）平常用不到，預設收起來
+// 進階設定（GitHub 權杖、密碼、備份）平常用不到，預設收起來
 const toggleAdvancedBtn = document.getElementById('toggleAdvancedBtn');
 const advancedSettings = document.getElementById('advancedSettings');
 toggleAdvancedBtn.addEventListener('click', () => {
   const collapsed = advancedSettings.style.display === 'none';
   advancedSettings.style.display = collapsed ? '' : 'none';
-  toggleAdvancedBtn.textContent = collapsed ? '進階設定（備份與還原） ▴' : '進階設定（備份與還原） ▾';
+  toggleAdvancedBtn.textContent = collapsed ? '進階設定（GitHub 權杖、密碼、備份） ▴' : '進階設定（GitHub 權杖、密碼、備份） ▾';
 });
 const fieldGuestNotes = document.getElementById('fieldGuestNotes');
 const categoryList = document.getElementById('categoryList');
@@ -767,6 +770,13 @@ function hideForm() {
   addProductBtn.style.display = '';
 }
 
+// 上傳照片要放的資料夾預設跟著產品名稱走，除非使用者自己手動改過
+let folderManuallyEdited = false;
+uploadFolderInput.addEventListener('input', () => { folderManuallyEdited = true; });
+fieldName.addEventListener('input', () => {
+  if (!folderManuallyEdited) uploadFolderInput.value = fieldName.value.trim();
+});
+
 function resetForm() {
   editingId = null;
   productForm.reset();
@@ -778,6 +788,8 @@ function resetForm() {
   reportUploadStatusMsg.textContent = '';
   fieldHideOrigin.checked = false;
   fieldGuestNotes.value = '';
+  uploadFolderInput.value = '';
+  folderManuallyEdited = false;
   formTitle.textContent = '新增產品';
   submitBtn.textContent = '新增產品';
   cancelEditBtn.style.display = 'none';
@@ -799,6 +811,8 @@ function loadProductIntoForm(product) {
   fieldHideOrigin.checked = !!product.hideOrigin;
   fieldManufacturer.value = product.manufacturer || '';
   fieldPackaging.value = product.packagingSpec || '';
+  uploadFolderInput.value = product.name;
+  folderManuallyEdited = false;
   currentPhotos = [...(product.photos || [])];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';

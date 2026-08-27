@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=58" />
+  <link rel="stylesheet" href="style.css?v=59" />
 </head>
 <body>
   <header class="site-header">
@@ -85,20 +85,8 @@
                 <p class="hint-text" id="photoUploadMsg"></p>
               </div>
               <div class="field full">
-                <label>GitHub 權杖（上傳、刪除照片都需要，只需設定一次）</label>
-                <div class="io-actions">
-                  <input type="password" id="githubPatInput" placeholder="GitHub 個人存取權杖（只存在這台瀏覽器）" style="flex:1;" />
-                  <button type="button" class="secondary" id="saveGithubPatBtn">儲存權杖</button>
-                </div>
-                <p class="hint-text">
-                  到 GitHub 網站右上角頭像 → Settings → Developer settings → Personal access tokens →
-                  Fine-grained tokens 建立一組，Repository 選這個 repo，Permissions 的 Contents 設為
-                  Read and write，複製貼在這裡存檔即可（只存在這台瀏覽器的 localStorage，不會上傳到任何地方）。
-                </p>
-              </div>
-              <div class="field full">
-                <label>上傳新照片（拖曳檔案到下面框框，或點擊選擇檔案，會直接存進 GitHub 的 images 資料夾）</label>
-                <input type="text" id="uploadFolderInput" placeholder="要放進哪個資料夾，例如：小花枝" style="max-width:260px; margin-bottom:8px;" />
+                <label>上傳新照片（拖曳檔案到下面框框，或點擊選擇檔案）</label>
+                <input type="text" id="uploadFolderInput" placeholder="要放進哪個資料夾，預設用產品名稱" style="max-width:260px; margin-bottom:8px;" />
                 <div id="uploadDropZone" class="upload-drop-zone">
                   拖曳照片到這裡，或點擊選擇檔案
                   <input type="file" id="uploadFileInput" accept="image/*" multiple style="display:none;" />
@@ -121,7 +109,7 @@
                 <div id="reportPreview" class="report-preview"></div>
               </div>
               <div class="field full">
-                <label>上傳新報告（拖曳 PDF 到下面框框，或點擊選擇檔案，會用上面「商品照片」設定的 GitHub 權杖）</label>
+                <label>上傳新報告（拖曳 PDF 到下面框框，或點擊選擇檔案）</label>
                 <div id="reportDropZone" class="upload-drop-zone">
                   拖曳 PDF 檔到這裡，或點擊選擇檔案
                   <input type="file" id="reportFileInput" accept="application/pdf" multiple style="display:none;" />
@@ -175,10 +163,24 @@
       </div>
 
       <div class="section-title-row">
-        <button type="button" id="toggleAdvancedBtn" class="secondary">進階設定（備份與還原） ▾</button>
+        <button type="button" id="toggleAdvancedBtn" class="secondary">進階設定（GitHub 權杖、密碼、備份） ▾</button>
       </div>
 
       <div id="advancedSettings" style="display:none;">
+        <div class="panel">
+          <h2>GitHub 權杖</h2>
+          <p class="hint-text">
+            上傳、刪除照片跟檢驗報告都需要，只需設定一次：到 GitHub 網站右上角頭像 → Settings →
+            Developer settings → Personal access tokens → Fine-grained tokens 建立一組，Repository
+            選這個 repo，Permissions 的 Contents 設為 Read and write，複製貼在這裡存檔即可
+            （只存在這台瀏覽器的 localStorage，不會上傳到任何地方）。
+          </p>
+          <div class="io-actions">
+            <input type="password" id="githubPatInput" placeholder="GitHub 個人存取權杖（只存在這台瀏覽器）" style="flex:1;" />
+            <button type="button" class="secondary" id="saveGithubPatBtn">儲存權杖</button>
+          </div>
+        </div>
+
         <div class="panel">
           <h2>檢驗報告下載密碼</h2>
           <p class="hint-text">
@@ -210,6 +212,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=58"></script>
+  <script type="module" src="admin.js?v=59"></script>
 </body>
 </html>
