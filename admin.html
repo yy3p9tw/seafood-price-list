@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=57" />
+  <link rel="stylesheet" href="style.css?v=58" />
 </head>
 <body>
   <header class="site-header">
@@ -114,18 +114,24 @@
           </div>
 
           <div class="form-section guest-section">
-            <h3 class="form-section-toggle">檢驗報告（訪客要輸入密碼才能下載，密碼在下面「進階設定」改）<span class="toggle-arrow">▾</span></h3>
+            <h3 class="form-section-toggle">檢驗報告（訪客要輸入密碼才能下載，密碼在下面「進階設定」改；一個商品可以選好幾份報告）<span class="toggle-arrow">▾</span></h3>
             <div class="form-section-body">
               <div class="field full">
-                <label>已上傳的檢驗報告</label>
+                <label>已選擇的報告</label>
                 <div id="reportPreview" class="report-preview"></div>
-                <p class="hint-text" id="reportUploadMsg"></p>
               </div>
               <div class="field full">
+                <label>上傳新報告（拖曳 PDF 到下面框框，或點擊選擇檔案，會用上面「商品照片」設定的 GitHub 權杖）</label>
                 <div id="reportDropZone" class="upload-drop-zone">
                   拖曳 PDF 檔到這裡，或點擊選擇檔案
-                  <input type="file" id="reportFileInput" accept="application/pdf" style="display:none;" />
+                  <input type="file" id="reportFileInput" accept="application/pdf" multiple style="display:none;" />
                 </div>
+                <p class="hint-text" id="reportUploadStatusMsg"></p>
+              </div>
+              <div class="field full">
+                <label>從報告庫選擇（挑之前上傳過的報告；縮圖右下角垃圾桶可永久刪除）</label>
+                <button type="button" class="secondary" id="loadReportLibraryBtn">瀏覽 / 重新整理報告庫</button>
+                <div id="reportLibraryGrid" class="report-library-grid"></div>
               </div>
             </div>
           </div>
@@ -204,6 +210,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=57"></script>
+  <script type="module" src="admin.js?v=58"></script>
 </body>
 </html>

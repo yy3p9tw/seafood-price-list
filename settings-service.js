@@ -1,7 +1,7 @@
 // 全站共用設定：目前只有「檢驗報告下載密碼」。
 // 密碼只存雜湊值（SHA-256），不存明碼，避免有人直接看 Firestore 資料就拿到密碼。
 
-import { db } from './firebase-config.js?v=57';
+import { db } from './firebase-config.js?v=58';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const settingsRef = doc(db, 'settings', 'reportAccess');

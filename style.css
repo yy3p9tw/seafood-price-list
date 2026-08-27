@@ -559,15 +559,22 @@ main {
   background: rgba(255, 255, 255, 0.3);
 }
 
-.report-download-btn {
-  align-self: flex-start;
+.report-download-list {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.report-download-btn {
   background: var(--color-surface);
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
   font-size: 13px;
   padding: 8px 14px;
   border-radius: 8px;
+  text-align: left;
 }
 
 .report-download-btn:hover {
@@ -866,6 +873,19 @@ button.danger:hover {
   border-width: 2px;
 }
 
+.report-preview,
+.report-library-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.report-library-grid {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
 .report-preview-item {
   display: flex;
   align-items: center;
@@ -875,6 +895,15 @@ button.danger:hover {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 14px;
+}
+
+.report-preview-item span {
+  overflow-wrap: anywhere;
+}
+
+.report-preview-item.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .report-preview-item a {

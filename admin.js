@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { app } from './firebase-config.js?v=57';
+import { app } from './firebase-config.js?v=58';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,8 +17,8 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=57';
-import { setReportPassword } from './settings-service.js?v=57';
+} from './products-service.js?v=58';
+import { setReportPassword } from './settings-service.js?v=58';
 
 const auth = getAuth(app);
 
@@ -56,9 +56,11 @@ const uploadFileInput = document.getElementById('uploadFileInput');
 const uploadMsg = document.getElementById('uploadMsg');
 
 const reportPreview = document.getElementById('reportPreview');
-const reportUploadMsg = document.getElementById('reportUploadMsg');
 const reportDropZone = document.getElementById('reportDropZone');
 const reportFileInput = document.getElementById('reportFileInput');
+const reportUploadStatusMsg = document.getElementById('reportUploadStatusMsg');
+const loadReportLibraryBtn = document.getElementById('loadReportLibraryBtn');
+const reportLibraryGrid = document.getElementById('reportLibraryGrid');
 const reportPasswordInput = document.getElementById('reportPasswordInput');
 const saveReportPasswordBtn = document.getElementById('saveReportPasswordBtn');
 const reportPasswordMsg = document.getElementById('reportPasswordMsg');
@@ -97,7 +99,7 @@ const ioMsg = document.getElementById('ioMsg');
 
 let editingId = null;
 let currentPhotos = [];
-let currentReportUrl = '';
+let currentReports = [];
 let currentProducts = [];
 let unsubscribeProducts = null;
 
@@ -526,7 +528,7 @@ uploadFileInput.addEventListener('change', () => {
   uploadFileInput.value = '';
 });
 
-// ---------- 檢驗報告 (單一 PDF，一樣直接上傳到 GitHub) ----------
+// ---------- 檢驗報告 (一個商品可以選好幾份，跟照片庫同一套邏輯) ----------
 
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -538,54 +540,172 @@ function fileToBase64(file) {
 }
 
 function renderReportPreview() {
-  if (!currentReportUrl) {
-    reportPreview.innerHTML = `<p class="hint-text">尚未上傳檢驗報告</p>`;
+  if (!currentReports.length) {
+    reportPreview.innerHTML = `<p class="hint-text">尚未選擇任何檢驗報告</p>`;
     return;
   }
-  const filename = decodeURIComponent(currentReportUrl.split('/').pop());
-  reportPreview.innerHTML = `
-    <div class="report-preview-item">
-      <a href="${escapeHTML(currentReportUrl)}" target="_blank" rel="noopener">📄 ${escapeHTML(filename)}</a>
-      <button type="button" class="secondary report-remove-btn">移除</button>
-    </div>
-  `;
-  reportPreview.querySelector('.report-remove-btn').addEventListener('click', () => {
-    currentReportUrl = '';
-    renderReportPreview();
+  reportPreview.innerHTML = currentReports.map((url, i) => {
+    const filename = decodeURIComponent(url.split('/').pop());
+    return `
+      <div class="report-preview-item">
+        <a href="${escapeHTML(url)}" target="_blank" rel="noopener">📄 ${escapeHTML(filename)}</a>
+        <button type="button" class="secondary report-remove-btn" data-index="${i}">移除</button>
+      </div>
+    `;
+  }).join('');
+  reportPreview.querySelectorAll('.report-remove-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentReports.splice(Number(btn.dataset.index), 1);
+      renderReportPreview();
+      renderReportLibrary();
+    });
   });
 }
 
-async function uploadReportToGithub(file) {
-  const pat = localStorage.getItem(GITHUB_PAT_KEY);
-  if (!pat) {
-    reportUploadMsg.style.color = 'var(--color-danger)';
-    reportUploadMsg.textContent = '請先在上面「商品照片」區塊貼上 GitHub 個人存取權杖並存檔，才能上傳報告';
+let reportLibraryFiles = null;
+
+function renderReportLibrary() {
+  if (!reportLibraryFiles) return;
+  if (!reportLibraryFiles.length) {
+    reportLibraryGrid.style.display = '';
+    reportLibraryGrid.innerHTML = `<p class="hint-text">reports 資料夾裡還沒有報告</p>`;
     return;
   }
-  reportUploadMsg.style.color = 'var(--color-text-muted)';
-  reportUploadMsg.textContent = '上傳中...';
-  try {
-    const base64 = await fileToBase64(file);
-    const filename = sanitizeFileBase(file.name) + '-' + Date.now() + '.pdf';
-    const path = 'reports/' + filename;
-    const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
-    const res = await fetch(apiPath, {
-      method: 'PUT',
-      headers: { Authorization: 'Bearer ' + pat, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: '上傳檢驗報告：' + path, content: base64, branch: 'main' })
+  reportLibraryGrid.style.display = 'block';
+  reportLibraryGrid.innerHTML = reportLibraryFiles.map(f => {
+    const selected = currentReports.includes(f.url);
+    const filename = decodeURIComponent(f.url.split('/').pop());
+    return `
+      <div class="report-preview-item report-library-item${selected ? ' selected' : ''}" data-url="${escapeHTML(f.url)}" data-path="${escapeHTML(f.path)}">
+        <span>📄 ${escapeHTML(filename)}</span>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="secondary report-library-toggle">${selected ? '取消選擇' : '選擇'}</button>
+          <button type="button" class="danger report-library-delete" title="永久刪除這份報告">🗑</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  reportLibraryGrid.querySelectorAll('.report-library-item').forEach(item => {
+    item.querySelector('.report-library-toggle').addEventListener('click', () => {
+      const url = item.dataset.url;
+      const idx = currentReports.indexOf(url);
+      if (idx === -1) currentReports.push(url);
+      else currentReports.splice(idx, 1);
+      renderReportPreview();
+      renderReportLibrary();
     });
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.message || ('上傳失敗 (' + res.status + ')'));
-    }
-    currentReportUrl = PAGES_BASE + path.split('/').map(encodeURIComponent).join('/');
-    renderReportPreview();
-    reportUploadMsg.style.color = 'var(--color-success)';
-    reportUploadMsg.textContent = '已上傳，記得存檔商品才會真的套用';
-  } catch (err) {
-    reportUploadMsg.style.color = 'var(--color-danger)';
-    reportUploadMsg.textContent = '上傳失敗：' + err.message;
+    item.querySelector('.report-library-delete').addEventListener('click', () => deleteLibraryReport(item.dataset.path, item.dataset.url));
+  });
+}
+
+async function deleteLibraryReport(path, url) {
+  const pat = localStorage.getItem(GITHUB_PAT_KEY);
+  if (!pat) {
+    alert('請先在上面「商品照片」區塊貼上 GitHub 個人存取權杖並存檔，才能刪除報告');
+    return;
   }
+  if (!confirm('確定要永久刪除這份報告嗎？這個動作無法復原。如果有商品正在使用這份報告，記得也要去該商品編輯畫面把它移除。')) return;
+  try {
+    const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
+    const getRes = await fetch(apiPath, { headers: { Authorization: 'Bearer ' + pat } });
+    if (!getRes.ok) {
+      const errBody = await getRes.json().catch(() => ({}));
+      throw new Error('讀取檔案資訊失敗 (' + getRes.status + ')：' + (errBody.message || '未知錯誤'));
+    }
+    const fileInfo = await getRes.json();
+    const delRes = await fetch(apiPath, {
+      method: 'DELETE',
+      headers: { Authorization: 'Bearer ' + pat, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: '刪除檢驗報告：' + path, sha: fileInfo.sha, branch: 'main' })
+    });
+    if (!delRes.ok) {
+      const errBody = await delRes.json().catch(() => ({}));
+      throw new Error(errBody.message || ('刪除失敗 (' + delRes.status + ')'));
+    }
+    reportLibraryFiles = reportLibraryFiles.filter(f => f.path !== path);
+    const idx = currentReports.indexOf(url);
+    if (idx !== -1) {
+      currentReports.splice(idx, 1);
+      renderReportPreview();
+    }
+    renderReportLibrary();
+  } catch (err) {
+    alert('刪除失敗：' + err.message);
+  }
+}
+
+let reportLibraryOpen = false;
+
+loadReportLibraryBtn.addEventListener('click', async () => {
+  if (reportLibraryOpen) {
+    reportLibraryGrid.style.display = 'none';
+    reportLibraryOpen = false;
+    loadReportLibraryBtn.textContent = '瀏覽 / 重新整理報告庫';
+    return;
+  }
+  reportLibraryOpen = true;
+  loadReportLibraryBtn.textContent = '收合報告庫';
+  reportLibraryGrid.style.display = '';
+  reportLibraryGrid.innerHTML = `<p class="hint-text">載入中...</p>`;
+  try {
+    const res = await fetch('https://api.github.com/repos/' + GITHUB_REPO + '/git/trees/main?recursive=1');
+    if (!res.ok) throw new Error('讀取失敗 (' + res.status + ')');
+    const data = await res.json();
+    reportLibraryFiles = (data.tree || [])
+      .filter(t => t.type === 'blob' && t.path.startsWith('reports/') && /\.pdf$/i.test(t.path))
+      .map(t => ({
+        path: t.path,
+        url: PAGES_BASE + t.path.split('/').map(encodeURIComponent).join('/')
+      }));
+    renderReportLibrary();
+  } catch (err) {
+    reportLibraryGrid.style.display = '';
+    reportLibraryGrid.innerHTML = `<p class="hint-text" style="color:var(--color-danger);">讀取報告庫失敗：${escapeHTML(err.message)}</p>`;
+  }
+});
+
+async function uploadReportsToGithub(files) {
+  const pat = localStorage.getItem(GITHUB_PAT_KEY);
+  if (!pat) {
+    reportUploadStatusMsg.style.color = 'var(--color-danger)';
+    reportUploadStatusMsg.textContent = '請先在上面「商品照片」區塊貼上 GitHub 個人存取權杖並存檔，才能上傳報告';
+    return;
+  }
+  let uploadedCount = 0;
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    reportUploadStatusMsg.style.color = 'var(--color-text-muted)';
+    reportUploadStatusMsg.textContent = `上傳中...（${i + 1}/${files.length}）`;
+    try {
+      const base64 = await fileToBase64(file);
+      const filename = sanitizeFileBase(file.name) + '-' + Date.now() + '-' + i + '.pdf';
+      const path = 'reports/' + filename;
+      const apiPath = 'https://api.github.com/repos/' + GITHUB_REPO + '/contents/' + encodeGithubPath(path);
+      const res = await fetch(apiPath, {
+        method: 'PUT',
+        headers: { Authorization: 'Bearer ' + pat, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: '上傳檢驗報告：' + path, content: base64, branch: 'main' })
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.message || ('上傳失敗 (' + res.status + ')'));
+      }
+      const url = PAGES_BASE + path.split('/').map(encodeURIComponent).join('/');
+      currentReports.push(url);
+      if (reportLibraryFiles) reportLibraryFiles.push({ path, url });
+      uploadedCount++;
+    } catch (err) {
+      reportUploadStatusMsg.style.color = 'var(--color-danger)';
+      reportUploadStatusMsg.textContent = `上傳失敗（${file.name}）：${err.message}`;
+      renderReportPreview();
+      renderReportLibrary();
+      return;
+    }
+  }
+  renderReportPreview();
+  renderReportLibrary();
+  reportUploadStatusMsg.style.color = 'var(--color-success)';
+  reportUploadStatusMsg.textContent = `已上傳 ${uploadedCount} 份報告，並自動加入這個商品的已選擇報告`;
 }
 
 reportDropZone.addEventListener('click', () => reportFileInput.click());
@@ -602,13 +722,13 @@ reportDropZone.addEventListener('dragleave', () => {
 reportDropZone.addEventListener('drop', e => {
   e.preventDefault();
   reportDropZone.classList.remove('dragover');
-  const file = Array.from(e.dataTransfer.files).find(f => f.type === 'application/pdf');
-  if (file) uploadReportToGithub(file);
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+  if (files.length) uploadReportsToGithub(files);
 });
 
 reportFileInput.addEventListener('change', () => {
-  const file = reportFileInput.files[0];
-  if (file) uploadReportToGithub(file);
+  const files = Array.from(reportFileInput.files);
+  if (files.length) uploadReportsToGithub(files);
   reportFileInput.value = '';
 });
 
@@ -653,9 +773,9 @@ function resetForm() {
   currentPhotos = [];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
-  currentReportUrl = '';
+  currentReports = [];
   renderReportPreview();
-  reportUploadMsg.textContent = '';
+  reportUploadStatusMsg.textContent = '';
   fieldHideOrigin.checked = false;
   fieldGuestNotes.value = '';
   formTitle.textContent = '新增產品';
@@ -682,9 +802,9 @@ function loadProductIntoForm(product) {
   currentPhotos = [...(product.photos || [])];
   renderPhotoPreview();
   photoUploadMsg.textContent = '';
-  currentReportUrl = product.reportUrl || '';
+  currentReports = [...(product.reportUrls || [])];
   renderReportPreview();
-  reportUploadMsg.textContent = '';
+  reportUploadStatusMsg.textContent = '';
   fieldGuestNotes.value = (product.specNotes || []).join('\n');
   formTitle.textContent = '編輯產品：' + product.name;
   submitBtn.textContent = '儲存變更';
@@ -707,7 +827,7 @@ productForm.addEventListener('submit', async e => {
     // 編輯時沿用原本的排序值；新增產品預設排在該分類最後面，之後可以用上/下移調整
     sortOrder: existingProduct ? (existingProduct.sortOrder || 0) : nextSortOrderFor(category),
     photos: currentPhotos,
-    reportUrl: currentReportUrl,
+    reportUrls: currentReports,
     specNotes: getNotesFrom(fieldGuestNotes)
   };
   if (!data.name) return;
@@ -762,7 +882,7 @@ function renderTable() {
     <tr data-id="${p.id}" data-category="${escapeHTML(p.category || '')}" draggable="${dragEnabled}">
       <td>${dragEnabled ? '<span class="drag-handle" title="拖拉調整順序">⠿</span> ' : ''}${escapeHTML(p.name)}</td>
       <td>${(p.photos || []).length ? `${p.photos.length} 張` : '-'}</td>
-      <td>${p.reportUrl ? '有' : '-'}</td>
+      <td>${(p.reportUrls || []).length ? `${p.reportUrls.length} 份` : '-'}</td>
       <td>${(p.specNotes || []).length ? `${p.specNotes.length} 則` : '-'}</td>
       <td>
         <div class="row-actions">

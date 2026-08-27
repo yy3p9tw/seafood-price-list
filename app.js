@@ -1,6 +1,6 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts } from './products-service.js?v=57';
-import { hashPassword, getReportPasswordHash } from './settings-service.js?v=57';
+import { subscribeToProducts } from './products-service.js?v=58';
+import { hashPassword, getReportPasswordHash } from './settings-service.js?v=58';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -85,6 +85,12 @@ function escapeHTML(str) {
 // 原料/產地/包裝規格這幾行用同一個排版：標籤固定寬度，值另外分行時會對齊標籤後面，不會頂到最左邊
 function metaLine(label, value) {
   return `<div class="meta-line"><span class="meta-label">${escapeHTML(label)}：</span><span class="meta-value">${escapeHTML(value)}</span></div>`;
+}
+
+// 報告檔名後台上傳時會補一段「-時間戳-序號」方便去重，訪客看不需要這段，顯示前先拿掉
+function formatReportLabel(url) {
+  const filename = decodeURIComponent(url.split('/').pop() || '');
+  return filename.replace(/\.pdf$/i, '').replace(/-\d{10,}-\d+$/, '');
 }
 
 // 照片燈箱：點縮圖放大看，點右上角 ✕ 或點任何地方關閉
@@ -305,8 +311,12 @@ function renderProducts() {
           </ul>
         </div>
       ` : ''}
-      ${p.reportUrl ? `
-        <button type="button" class="report-download-btn" data-report-url="${escapeHTML(p.reportUrl)}">📄 檢驗報告下載</button>
+      ${(p.reportUrls || []).length ? `
+        <div class="report-download-list">
+          ${p.reportUrls.map(url => `
+            <button type="button" class="report-download-btn" data-report-url="${escapeHTML(url)}">📄 ${escapeHTML(formatReportLabel(url))}</button>
+          `).join('')}
+        </div>
       ` : ''}
     </div>
   `;
