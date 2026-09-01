@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=59" />
+  <link rel="stylesheet" href="style.css?v=60" />
 </head>
 <body>
   <header class="site-header">
@@ -162,6 +162,16 @@
         </div>
       </div>
 
+      <div class="panel">
+        <div class="section-title-row">
+          <h2>檢驗報告管理</h2>
+          <button type="button" class="secondary" id="loadReportManagerBtn">瀏覽 / 重新整理報告庫</button>
+        </div>
+        <p class="hint-text">點一份報告，勾選要套用在哪些商品——勾選後立即生效，不用另外存檔。</p>
+        <div id="reportManagerList" class="report-manager-list"></div>
+        <div id="reportManagerProducts" class="report-manager-products"></div>
+      </div>
+
       <div class="section-title-row">
         <button type="button" id="toggleAdvancedBtn" class="secondary">進階設定（GitHub 權杖、密碼、備份） ▾</button>
       </div>
@@ -212,6 +222,6 @@
     </div>
   </main>
 
-  <script type="module" src="admin.js?v=59"></script>
+  <script type="module" src="admin.js?v=60"></script>
 </body>
 </html>

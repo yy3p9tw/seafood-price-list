@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { app } from './firebase-config.js?v=59';
+import { app } from './firebase-config.js?v=60';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,8 +17,8 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=59';
-import { setReportPassword } from './settings-service.js?v=59';
+} from './products-service.js?v=60';
+import { setReportPassword } from './settings-service.js?v=60';
 
 const auth = getAuth(app);
 
@@ -64,6 +64,10 @@ const reportLibraryGrid = document.getElementById('reportLibraryGrid');
 const reportPasswordInput = document.getElementById('reportPasswordInput');
 const saveReportPasswordBtn = document.getElementById('saveReportPasswordBtn');
 const reportPasswordMsg = document.getElementById('reportPasswordMsg');
+
+const loadReportManagerBtn = document.getElementById('loadReportManagerBtn');
+const reportManagerList = document.getElementById('reportManagerList');
+const reportManagerProducts = document.getElementById('reportManagerProducts');
 
 // 表單裡的商品照片/檢驗報告/備註三大塊，點標題可以個別折疊。
 // 預設全部收起來，表單一打開只看到基本資料，需要哪個區塊再自己點開，不用每次都捲過整段
@@ -207,6 +211,8 @@ onAuthStateChanged(auth, user => {
           currentProducts = products;
           renderTable();
           renderDatalists();
+          renderReportManagerList();
+          renderReportManagerProducts();
         },
         err => {
           formMsg.style.color = 'var(--color-danger)';
@@ -637,6 +643,20 @@ async function deleteLibraryReport(path, url) {
   }
 }
 
+// 抓 GitHub reports/ 資料夾裡的檔案清單，商品表單的報告庫、下面的「檢驗報告管理」分頁共用同一份
+async function fetchReportLibraryFiles() {
+  const res = await fetch('https://api.github.com/repos/' + GITHUB_REPO + '/git/trees/main?recursive=1');
+  if (!res.ok) throw new Error('讀取失敗 (' + res.status + ')');
+  const data = await res.json();
+  reportLibraryFiles = (data.tree || [])
+    .filter(t => t.type === 'blob' && t.path.startsWith('reports/') && /\.pdf$/i.test(t.path))
+    .map(t => ({
+      path: t.path,
+      url: PAGES_BASE + t.path.split('/').map(encodeURIComponent).join('/')
+    }));
+  return reportLibraryFiles;
+}
+
 let reportLibraryOpen = false;
 
 loadReportLibraryBtn.addEventListener('click', async () => {
@@ -651,15 +671,7 @@ loadReportLibraryBtn.addEventListener('click', async () => {
   reportLibraryGrid.style.display = '';
   reportLibraryGrid.innerHTML = `<p class="hint-text">載入中...</p>`;
   try {
-    const res = await fetch('https://api.github.com/repos/' + GITHUB_REPO + '/git/trees/main?recursive=1');
-    if (!res.ok) throw new Error('讀取失敗 (' + res.status + ')');
-    const data = await res.json();
-    reportLibraryFiles = (data.tree || [])
-      .filter(t => t.type === 'blob' && t.path.startsWith('reports/') && /\.pdf$/i.test(t.path))
-      .map(t => ({
-        path: t.path,
-        url: PAGES_BASE + t.path.split('/').map(encodeURIComponent).join('/')
-      }));
+    await fetchReportLibraryFiles();
     renderReportLibrary();
   } catch (err) {
     reportLibraryGrid.style.display = '';
@@ -755,6 +767,93 @@ saveReportPasswordBtn.addEventListener('click', async () => {
     reportPasswordMsg.textContent = '更新失敗：' + err.message;
   } finally {
     saveReportPasswordBtn.disabled = false;
+  }
+});
+
+// ---------- 檢驗報告管理（跟商品表單的報告庫共用同一份清單，但方向相反：先選一份報告，再勾選要套用的商品） ----------
+
+let selectedManagerReportUrl = null;
+
+function countProductsForReport(url) {
+  return currentProducts.filter(p => (p.reportUrls || []).includes(url)).length;
+}
+
+function renderReportManagerList() {
+  if (!reportLibraryFiles) return;
+  if (!reportLibraryFiles.length) {
+    reportManagerList.innerHTML = `<p class="hint-text">reports 資料夾裡還沒有報告</p>`;
+    return;
+  }
+  reportManagerList.innerHTML = reportLibraryFiles.map(f => {
+    const filename = decodeURIComponent(f.url.split('/').pop());
+    const count = countProductsForReport(f.url);
+    const active = f.url === selectedManagerReportUrl;
+    return `
+      <div class="report-preview-item report-manager-item${active ? ' selected' : ''}" data-url="${escapeHTML(f.url)}">
+        <span>📄 ${escapeHTML(filename)}</span>
+        <span class="hint-text">${count} 個商品套用中</span>
+      </div>
+    `;
+  }).join('');
+  reportManagerList.querySelectorAll('.report-manager-item').forEach(item => {
+    item.addEventListener('click', () => {
+      selectedManagerReportUrl = item.dataset.url;
+      renderReportManagerList();
+      renderReportManagerProducts();
+    });
+  });
+}
+
+function renderReportManagerProducts() {
+  if (!selectedManagerReportUrl) {
+    reportManagerProducts.innerHTML = '';
+    return;
+  }
+  const url = selectedManagerReportUrl;
+  const list = sortedProducts();
+  reportManagerProducts.innerHTML = `
+    <label>套用商品（勾選後立即生效）</label>
+    <div class="report-manager-product-list">
+      ${list.map(p => `
+        <label class="report-manager-checkbox">
+          <input type="checkbox" data-id="${p.id}" ${(p.reportUrls || []).includes(url) ? 'checked' : ''} />
+          <span class="hint-text">${escapeHTML(p.category || '未分類')}</span> ${escapeHTML(p.name)}
+        </label>
+      `).join('')}
+    </div>
+  `;
+  reportManagerProducts.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const product = currentProducts.find(p => p.id === cb.dataset.id);
+      if (!product) return;
+      const urls = new Set(product.reportUrls || []);
+      if (cb.checked) urls.add(url);
+      else urls.delete(url);
+      cb.disabled = true;
+      try {
+        const { id, ...data } = product;
+        await updateProduct(id, { ...data, reportUrls: Array.from(urls) });
+      } catch (err) {
+        alert('更新失敗：' + err.message);
+        cb.checked = !cb.checked;
+      } finally {
+        cb.disabled = false;
+      }
+    });
+  });
+}
+
+loadReportManagerBtn.addEventListener('click', async () => {
+  loadReportManagerBtn.disabled = true;
+  reportManagerList.innerHTML = `<p class="hint-text">載入中...</p>`;
+  try {
+    await fetchReportLibraryFiles();
+    renderReportManagerList();
+    renderReportManagerProducts();
+  } catch (err) {
+    reportManagerList.innerHTML = `<p class="hint-text" style="color:var(--color-danger);">讀取報告庫失敗：${escapeHTML(err.message)}</p>`;
+  } finally {
+    loadReportManagerBtn.disabled = false;
   }
 });
 
