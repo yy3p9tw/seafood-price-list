@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { app } from './firebase-config.js?v=60';
+import { app } from './firebase-config.js?v=61';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,8 +17,8 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=60';
-import { setReportPassword } from './settings-service.js?v=60';
+} from './products-service.js?v=61';
+import { setReportPassword } from './settings-service.js?v=61';
 
 const auth = getAuth(app);
 
@@ -240,6 +240,15 @@ function escapeHTML(str) {
   const div = document.createElement('div');
   div.textContent = str ?? '';
   return div.innerHTML;
+}
+
+// 報告檔名只顯示英數字編號（例如 AFA26401641），中文品名/廠商名跟上傳時補的
+// 「-時間戳-序號」都不顯示
+function formatReportLabel(url) {
+  const filename = decodeURIComponent(url.split('/').pop() || '');
+  const stripped = filename.replace(/\.pdf$/i, '').replace(/-\d{10,}-\d+$/, '');
+  const match = stripped.match(/[A-Za-z0-9]{5,}/);
+  return match ? match[0] : stripped;
 }
 
 // ---------- 商品照片 (直接貼網址，Firestore 只存網址字串) ----------
@@ -554,10 +563,9 @@ function renderReportPreview() {
     return;
   }
   reportPreview.innerHTML = currentReports.map((url, i) => {
-    const filename = decodeURIComponent(url.split('/').pop());
     return `
       <div class="report-preview-item">
-        <a href="${escapeHTML(url)}" target="_blank" rel="noopener">📄 ${escapeHTML(filename)}</a>
+        <a href="${escapeHTML(url)}" target="_blank" rel="noopener">📄 ${escapeHTML(formatReportLabel(url))}</a>
         <button type="button" class="secondary report-remove-btn" data-index="${i}">移除</button>
       </div>
     `;
@@ -583,10 +591,9 @@ function renderReportLibrary() {
   reportLibraryGrid.style.display = 'block';
   reportLibraryGrid.innerHTML = reportLibraryFiles.map(f => {
     const selected = currentReports.includes(f.url);
-    const filename = decodeURIComponent(f.url.split('/').pop());
     return `
       <div class="report-preview-item report-library-item${selected ? ' selected' : ''}" data-url="${escapeHTML(f.url)}" data-path="${escapeHTML(f.path)}">
-        <span>📄 ${escapeHTML(filename)}</span>
+        <span>📄 ${escapeHTML(formatReportLabel(f.url))}</span>
         <div style="display:flex; gap:6px;">
           <button type="button" class="secondary report-library-toggle">${selected ? '取消選擇' : '選擇'}</button>
           <button type="button" class="danger report-library-delete" title="永久刪除這份報告">🗑</button>
@@ -785,12 +792,11 @@ function renderReportManagerList() {
     return;
   }
   reportManagerList.innerHTML = reportLibraryFiles.map(f => {
-    const filename = decodeURIComponent(f.url.split('/').pop());
     const count = countProductsForReport(f.url);
     const active = f.url === selectedManagerReportUrl;
     return `
       <div class="report-preview-item report-manager-item${active ? ' selected' : ''}" data-url="${escapeHTML(f.url)}">
-        <span>📄 ${escapeHTML(filename)}</span>
+        <span>📄 ${escapeHTML(formatReportLabel(f.url))}</span>
         <span class="hint-text">${count} 個商品套用中</span>
       </div>
     `;

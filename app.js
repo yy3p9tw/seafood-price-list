@@ -1,6 +1,6 @@
 // 公開展示頁：即時訂閱 Firestore 的商品資料，後台一存檔，這裡不用重新整理就會自動更新。
-import { subscribeToProducts } from './products-service.js?v=60';
-import { hashPassword, getReportPasswordHash } from './settings-service.js?v=60';
+import { subscribeToProducts } from './products-service.js?v=61';
+import { hashPassword, getReportPasswordHash } from './settings-service.js?v=61';
 
 const productGrid = document.getElementById('productGrid');
 const productOverview = document.getElementById('productOverview');
@@ -87,10 +87,13 @@ function metaLine(label, value) {
   return `<div class="meta-line"><span class="meta-label">${escapeHTML(label)}：</span><span class="meta-value">${escapeHTML(value)}</span></div>`;
 }
 
-// 報告檔名後台上傳時會補一段「-時間戳-序號」方便去重，訪客看不需要這段，顯示前先拿掉
+// 報告檔名只顯示英數字編號（例如 AFA26401641），中文品名/廠商名跟後台上傳時
+// 補的「-時間戳-序號」都不顯示，訪客看到的就是報告單號
 function formatReportLabel(url) {
   const filename = decodeURIComponent(url.split('/').pop() || '');
-  return filename.replace(/\.pdf$/i, '').replace(/-\d{10,}-\d+$/, '');
+  const stripped = filename.replace(/\.pdf$/i, '').replace(/-\d{10,}-\d+$/, '');
+  const match = stripped.match(/[A-Za-z0-9]{5,}/);
+  return match ? match[0] : stripped;
 }
 
 // 照片燈箱：點縮圖放大看，點右上角 ✕ 或點任何地方關閉
