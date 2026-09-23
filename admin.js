@@ -1,7 +1,7 @@
 // 後台管理：Firebase Authentication 登入 + Firestore 即時讀寫。
 // 存檔後，前台頁面會透過 Firestore 的即時監聽自動更新，不需要任何手動發布步驟。
 
-import { app } from './firebase-config.js?v=62';
+import { app } from './firebase-config.js?v=63';
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -17,8 +17,8 @@ import {
   clearAllProducts,
   importProducts,
   exportProductsAsJSON
-} from './products-service.js?v=62';
-import { setReportPassword } from './settings-service.js?v=62';
+} from './products-service.js?v=63';
+import { setReportPassword } from './settings-service.js?v=63';
 
 const auth = getAuth(app);
 
