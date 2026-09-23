@@ -4,9 +4,9 @@
   --color-border: #e3ddcd;
   --color-text: #1f2328;
   --color-text-muted: #6b7280;
-  --color-primary: #0C3F52;
-  --color-primary-hover: #082C3B;
-  --color-primary-soft: #DCEEF3;
+  --color-primary: #224E5A;
+  --color-primary-hover: #18373F;
+  --color-primary-soft: #E6E6E6;
   --color-accent-coral: #D9503D;
   --color-accent-coral-soft: #FFE7E1;
   --color-accent-green: #4FA98A;
@@ -90,7 +90,7 @@ header.site-header nav a:hover {
 /* 首頁專用的 Hero 風格頁首：漸層底色＋波浪分隔線，後台頁面不套用 */
 header.site-header-hero {
   position: relative;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #0f5d78 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #597A83 100%);
   border-bottom: none;
   display: block;
   padding: 20px 24px 34px;
